@@ -3,7 +3,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useStaffRole } from "@/hooks/useStaffRole";
 import type { StaffRole } from "@/lib/staff-roles";
 import { canMutateCompliance, canManagePlatform } from "@/lib/staff-roles";
-import { isDevBypassEnabled } from "@/lib/dev-bypass";
 import { ProfileLoadError } from "@/components/auth/ProfileLoadError";
 
 type StaffRouteProps = {
@@ -24,11 +23,6 @@ export function StaffRoute({
 }: StaffRouteProps) {
   const { user, loading: authLoading } = useAuth();
   const { role, isStaff, loading: roleLoading, error: profileError, profile } = useStaffRole();
-  const devBypass = isDevBypassEnabled();
-
-  if (devBypass) {
-    return <>{children}</>;
-  }
 
   if (authLoading || roleLoading) {
     return (

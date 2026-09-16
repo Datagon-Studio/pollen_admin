@@ -23,8 +23,6 @@ import { useStaffRole } from "@/hooks/useStaffRole";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { staffRoleLabel } from "@/lib/staff-roles";
-import { isDevBypassEnabled } from "@/lib/dev-bypass";
-
 type NavItem = {
   label: string;
   href: string;
@@ -128,11 +126,6 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             {envLabel !== "production" && (
               <Badge variant="warning" className="uppercase text-[10px]">
                 {envLabel}
-              </Badge>
-            )}
-            {isDevBypassEnabled() && (
-              <Badge variant="destructive" className="uppercase text-[10px]">
-                Dev bypass
               </Badge>
             )}
           </div>

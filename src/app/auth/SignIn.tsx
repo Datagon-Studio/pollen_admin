@@ -6,8 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { enableDevBypass, isDevBypassAvailable, isDevBypassEnabled } from "@/lib/dev-bypass";
-
 export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,15 +15,10 @@ export default function SignIn() {
   const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    if (!authLoading && (user || isDevBypassEnabled())) {
+    if (!authLoading && user) {
       navigate("/", { replace: true });
     }
   }, [user, authLoading, navigate]);
-
-  const handleDevBypass = () => {
-    enableDevBypass();
-    navigate("/", { replace: true });
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,21 +92,6 @@ export default function SignIn() {
               {loading ? "Signing in…" : "Sign in"}
             </Button>
           </form>
-          {isDevBypassAvailable() && (
-            <div className="mt-4 pt-4 border-t">
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={handleDevBypass}
-              >
-                Skip sign in (dev only)
-              </Button>
-              <p className="text-xs text-muted-foreground text-center mt-2">
-                Local development only — enters as superadmin without API auth.
-              </p>
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>

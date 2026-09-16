@@ -26,7 +26,6 @@ Tracks implementation against [PRD-System-Admin-Portal.md](./PRD-System-Admin-Po
 | Supabase sign-in | ✅ | Real auth + session refresh |
 | Staff role gate (`superadmin`) | ✅ | `users.role = superadmin` required |
 | Staff middleware (`ops` / `support` ready) | 🟡 | Code supports roles; DB constraint still `admin` / `superadmin` / `user` only |
-| Dev bypass (local UI only) | ✅ | No API token — use real sign-in for data |
 | CORS / Vite proxy | ✅ | Leave `VITE_API_URL` unset locally |
 | Pollean theme (amber/cream palette) | ✅ | Ported from `pollen_frontend` |
 | Light / dark mode | ✅ | `next-themes`, toggle in header |
@@ -141,8 +140,7 @@ cd pollen_admin && npm run dev              # :8081
 ```
 
 1. Sign in with a user where `public.users.role = 'superadmin'`.
-2. Do **not** use dev bypass if you need live API data.
-3. Keep `VITE_API_URL` unset in `pollen_admin/.env.local` (Vite proxies `/api`).
+2. Keep `VITE_API_URL` unset in `pollen_admin/.env.local` (Vite proxies `/api`).
 
 **Promote a user to superadmin (Supabase SQL):**
 

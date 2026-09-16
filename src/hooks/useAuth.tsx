@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
-import { disableDevBypass } from "@/lib/dev-bypass";
-
 const INACTIVITY_TIMEOUT = 20 * 60 * 1000;
 
 export function useAuth() {
@@ -12,7 +10,6 @@ export function useAuth() {
   const lastActivityRef = useRef(Date.now());
 
   const handleLogout = useCallback(async () => {
-    disableDevBypass();
     await supabase.auth.signOut();
     setUser(null);
     if (inactivityTimerRef.current) {
