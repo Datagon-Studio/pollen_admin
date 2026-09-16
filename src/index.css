@@ -1,0 +1,141 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Pollean design system — aligned with pollen_frontend group app */
+
+@layer base {
+  :root {
+    --amber: 36 100% 67%;
+    --amber-light: 36 100% 74%;
+    --amber-dark: 36 100% 67%;
+    --gold: 36 100% 67%;
+    --gold-light: 36 100% 74%;
+    --charcoal: 0 0% 18%;
+    --charcoal-light: 0 0% 28%;
+    --off-white: 37 39% 94%;
+    --cream: 37 32% 91%;
+
+    --background: 37 39% 94%;
+    --foreground: 0 0% 18%;
+
+    --card: 38 36% 96%;
+    --card-foreground: 0 0% 18%;
+
+    --popover: 38 36% 96%;
+    --popover-foreground: 0 0% 18%;
+
+    --primary: 36 100% 67%;
+    --primary-foreground: 0 0% 18%;
+
+    --secondary: 37 25% 90%;
+    --secondary-foreground: 0 0% 18%;
+
+    --muted: 37 25% 90%;
+    --muted-foreground: 0 0% 28%;
+
+    --accent: 36 100% 92%;
+    --accent-foreground: 0 0% 18%;
+
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 70% 30%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 36 100% 67%;
+    --warning-foreground: 0 0% 18%;
+
+    --border: 37 20% 84%;
+    --input: 37 20% 84%;
+    --ring: 36 100% 67%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 38 36% 96%;
+    --sidebar-foreground: 0 0% 18%;
+    --sidebar-primary: 36 100% 67%;
+    --sidebar-primary-foreground: 0 0% 18%;
+    --sidebar-accent: 37 25% 90%;
+    --sidebar-accent-foreground: 0 0% 18%;
+    --sidebar-border: 37 20% 84%;
+    --sidebar-ring: 36 100% 67%;
+    --sidebar: 38 36% 96%;
+
+    --font-sans:
+      "Montserrat", ui-sans-serif, system-ui, sans-serif,
+      Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
+    --font-mono:
+      "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
+      Consolas, Liberation Mono, Courier New, monospace;
+  }
+
+  .dark {
+    --amber: 36 100% 67%;
+    --amber-light: 36 100% 74%;
+    --gold: 36 100% 67%;
+    --gold-light: 36 100% 74%;
+    --charcoal: 37 39% 94%;
+    --charcoal-light: 37 20% 82%;
+    --cream: 0 0% 14%;
+
+    --background: 30 8% 9%;
+    --foreground: 37 39% 94%;
+
+    --card: 30 6% 12%;
+    --card-foreground: 37 39% 94%;
+
+    --popover: 30 6% 12%;
+    --popover-foreground: 37 39% 94%;
+
+    --primary: 36 100% 67%;
+    --primary-foreground: 0 0% 18%;
+
+    --secondary: 30 5% 16%;
+    --secondary-foreground: 37 39% 94%;
+
+    --muted: 30 5% 16%;
+    --muted-foreground: 37 18% 72%;
+
+    --accent: 36 32% 16%;
+    --accent-foreground: 36 100% 74%;
+
+    --destructive: 0 72% 56%;
+    --destructive-foreground: 37 39% 94%;
+
+    --success: 142 55% 42%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 36 100% 67%;
+    --warning-foreground: 0 0% 18%;
+
+    --border: 30 5% 20%;
+    --input: 30 5% 20%;
+    --ring: 36 100% 67%;
+
+    --sidebar-background: 30 8% 9%;
+    --sidebar-foreground: 37 39% 94%;
+    --sidebar-primary: 36 100% 67%;
+    --sidebar-primary-foreground: 0 0% 18%;
+    --sidebar-accent: 30 5% 16%;
+    --sidebar-accent-foreground: 37 39% 94%;
+    --sidebar-border: 30 5% 20%;
+    --sidebar-ring: 36 100% 67%;
+    --sidebar: 30 6% 12%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
