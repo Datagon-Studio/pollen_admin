@@ -215,6 +215,12 @@ export default function AccountDetail() {
                   </Row>
                   <Row label="Online">{formatCurrency(account.online_collected)}</Row>
                   <Row label="Manual">{formatCurrency(account.manual_collected)}</Row>
+                  <Row label="Total disbursed">
+                    {formatCurrency(account.total_disbursed)}
+                  </Row>
+                  <Row label="Net held">
+                    {formatCurrency(account.total_collected - account.total_disbursed)}
+                  </Row>
                 </CardContent>
               </Card>
             </div>

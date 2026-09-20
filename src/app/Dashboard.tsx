@@ -3,8 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { SectionPage } from "@/components/pages/SectionPage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TrendLineChart } from "@/components/charts/TrendLineChart";
 import { adminApi } from "@/services/admin.api";
-import { formatCurrency, formatMonthKey } from "@/lib/format";
+import { formatCurrency } from "@/lib/format";
 
 export default function Dashboard() {
   const { data, isLoading, error } = useQuery({
@@ -33,8 +34,6 @@ export default function Dashboard() {
       </SectionPage>
     );
   }
-
-  const maxTrend = Math.max(...data.monthlyTrend.map((m) => m.total), 1);
 
   return (
     <SectionPage
@@ -72,42 +71,22 @@ export default function Dashboard() {
           <CardTitle className="text-base">12-month collection trend</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-end gap-2 h-48 pt-4">
-            {data.monthlyTrend.map((m) => {
-              const heightPct = (m.total / maxTrend) * 100;
-              const onlinePct = m.total > 0 ? (m.online / m.total) * 100 : 0;
-              return (
-                <div
-                  key={m.month}
-                  className="flex-1 flex flex-col items-center gap-1 min-w-0"
-                  title={`${formatMonthKey(m.month)}: ${formatCurrency(m.total)} (online ${formatCurrency(m.online)}, manual ${formatCurrency(m.manual)})`}
-                >
-                  <div
-                    className="w-full rounded-t bg-muted overflow-hidden flex flex-col justify-end"
-                    style={{ height: `${Math.max(heightPct, 4)}%` }}
-                  >
-                    <div
-                      className="w-full bg-primary/80"
-                      style={{ height: `${onlinePct}%` }}
-                    />
-                    <div
-                      className="w-full bg-primary/30 flex-1"
-                      style={{ minHeight: m.manual > 0 ? "2px" : 0 }}
-                    />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground truncate w-full text-center">
-                    {formatMonthKey(m.month)}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-          <div className="flex gap-4 mt-4 text-xs text-muted-foreground">
+          <TrendLineChart data={data.monthlyTrend} />
+          <div className="flex flex-wrap gap-4 mt-2 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-sm bg-primary/80" /> Online
+              <span className="h-0.5 w-4 rounded-full bg-primary" />
+              Total
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-sm bg-primary/30" /> Manual
+              <span className="h-0.5 w-4 rounded-full bg-foreground" />
+              Online
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span
+                className="h-px w-4 border-t border-dashed border-muted-foreground"
+                aria-hidden
+              />
+              Manual
             </span>
           </div>
         </CardContent>

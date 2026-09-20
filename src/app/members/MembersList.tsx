@@ -3,40 +3,66 @@ import { useQuery } from "@tanstack/react-query";
 import { Loader2, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { SectionPage } from "@/components/pages/SectionPage";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { adminApi } from "@/services/admin.api";
+import { adminApi, type AdminMemberSummary } from "@/services/admin.api";
 import { formatCurrency, formatDate } from "@/lib/format";
+
+const SELECT_CLASS =
+  "h-10 rounded-md border border-input bg-background px-3 text-sm min-w-[10.5rem]";
 
 export default function MembersList() {
   const [search, setSearch] = useState("");
+  const [accountFilter, setAccountFilter] = useState("all");
+  const [groupsFilter, setGroupsFilter] = useState("all");
+  const [contribFilter, setContribFilter] = useState("all");
   const [verifiedFilter, setVerifiedFilter] = useState("all");
 
   const { data: members = [], isLoading, error } = useQuery({
-    queryKey: ["admin-members", verifiedFilter],
-    queryFn: () =>
-      adminApi.listMembers({
-        verified:
-          verifiedFilter === "verified"
-            ? true
-            : verifiedFilter === "unverified"
-              ? false
-              : undefined,
-      }),
+    queryKey: ["admin-members"],
+    queryFn: () => adminApi.listMembers(),
   });
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return members;
-    return members.filter(
-      (m) =>
-        m.full_name.toLowerCase().includes(q) ||
-        m.phone.includes(q) ||
-        (m.email?.toLowerCase().includes(q) ?? false) ||
-        (m.account_name?.toLowerCase().includes(q) ?? false)
-    );
-  }, [members, search]);
+  const accountOptions = useMemo(() => {
+    const names = new Map<string, string>();
+    for (const m of members) {
+      if (!names.has(m.account_id)) {
+        names.set(m.account_id, m.account_name || "Unnamed account");
+      }
+    }
+    return [...names.entries()]
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [members]);
+
+  const filtered = useMemo(
+    () =>
+      members.filter((m) => matchesMemberFilters(m, {
+        search,
+        accountFilter,
+        groupsFilter,
+        contribFilter,
+        verifiedFilter,
+      })),
+    [members, search, accountFilter, groupsFilter, contribFilter, verifiedFilter]
+  );
+
+  const hasActiveFilters =
+    search.trim() !== "" ||
+    accountFilter !== "all" ||
+    groupsFilter !== "all" ||
+    contribFilter !== "all" ||
+    verifiedFilter !== "all";
+
+  const clearFilters = () => {
+    setSearch("");
+    setAccountFilter("all");
+    setGroupsFilter("all");
+    setContribFilter("all");
+    setVerifiedFilter("all");
+  };
 
   return (
     <SectionPage
@@ -44,25 +70,70 @@ export default function MembersList() {
       description="All memberships across accounts. Identity clustering for same verified phone/email in other groups."
       phase="ready"
     >
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
+      <div className="flex flex-col gap-3">
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search name, email, phone, account…"
+            placeholder="Search name, email, phone, account, membership no.…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
           />
         </div>
-        <select
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-          value={verifiedFilter}
-          onChange={(e) => setVerifiedFilter(e.target.value)}
-        >
-          <option value="all">All verification</option>
-          <option value="verified">Verified</option>
-          <option value="unverified">Unverified</option>
-        </select>
+        <div className="flex flex-wrap gap-3">
+          <select
+            aria-label="Filter by account"
+            className={SELECT_CLASS}
+            value={accountFilter}
+            onChange={(e) => setAccountFilter(e.target.value)}
+          >
+            <option value="all">All accounts</option>
+            {accountOptions.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </select>
+          <select
+            aria-label="Filter by number of groups"
+            className={SELECT_CLASS}
+            value={groupsFilter}
+            onChange={(e) => setGroupsFilter(e.target.value)}
+          >
+            <option value="all">All group counts</option>
+            <option value="1">1 group</option>
+            <option value="2">2 groups</option>
+            <option value="3plus">3+ groups</option>
+          </select>
+          <select
+            aria-label="Filter by contributions"
+            className={SELECT_CLASS}
+            value={contribFilter}
+            onChange={(e) => setContribFilter(e.target.value)}
+          >
+            <option value="all">All contributions</option>
+            <option value="none">No contributions</option>
+            <option value="has">Has contributions</option>
+            <option value="under1k">Under GH₵1,000</option>
+            <option value="1k-10k">GH₵1,000–10,000</option>
+            <option value="10kplus">Over GH₵10,000</option>
+          </select>
+          <select
+            aria-label="Filter by verification"
+            className={SELECT_CLASS}
+            value={verifiedFilter}
+            onChange={(e) => setVerifiedFilter(e.target.value)}
+          >
+            <option value="all">All verification</option>
+            <option value="verified">Verified</option>
+            <option value="unverified">Unverified</option>
+          </select>
+          {hasActiveFilters && (
+            <Button type="button" variant="ghost" onClick={clearFilters}>
+              Clear filters
+            </Button>
+          )}
+        </div>
       </div>
 
       {isLoading && (
@@ -101,7 +172,9 @@ export default function MembersList() {
                 {filtered.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="p-8 text-center text-muted-foreground">
-                      No memberships found
+                      {hasActiveFilters
+                        ? "No memberships match your filters"
+                        : "No memberships found"}
                     </td>
                   </tr>
                 ) : (
@@ -156,3 +229,55 @@ export default function MembersList() {
     </SectionPage>
   );
 }
+
+function matchesMemberFilters(
+  m: AdminMemberSummary,
+  filters: {
+    search: string;
+    accountFilter: string;
+    groupsFilter: string;
+    contribFilter: string;
+    verifiedFilter: string;
+  }
+): boolean {
+  const q = filters.search.trim().toLowerCase();
+  if (q) {
+    const haystack = [
+      m.full_name,
+      m.phone,
+      m.email ?? "",
+      m.account_name ?? "",
+      m.membership_number ?? "",
+    ]
+      .join(" ")
+      .toLowerCase();
+    if (!haystack.includes(q)) return false;
+  }
+
+  if (filters.accountFilter !== "all" && m.account_id !== filters.accountFilter) {
+    return false;
+  }
+
+  const groupCount = m.also_in_count + 1;
+  if (filters.groupsFilter === "1" && groupCount !== 1) return false;
+  if (filters.groupsFilter === "2" && groupCount !== 2) return false;
+  if (filters.groupsFilter === "3plus" && groupCount < 3) return false;
+
+  if (filters.contribFilter === "none" && m.contribution_count !== 0) return false;
+  if (filters.contribFilter === "has" && m.contribution_count === 0) return false;
+  if (filters.contribFilter === "under1k") {
+    if (m.contribution_total <= 0 || m.contribution_total >= 1000) return false;
+  }
+  if (filters.contribFilter === "1k-10k") {
+    if (m.contribution_total < 1000 || m.contribution_total >= 10_000) return false;
+  }
+  if (filters.contribFilter === "10kplus" && m.contribution_total < 10_000) {
+    return false;
+  }
+
+  if (filters.verifiedFilter === "verified" && !m.is_active) return false;
+  if (filters.verifiedFilter === "unverified" && m.is_active) return false;
+
+  return true;
+}
+

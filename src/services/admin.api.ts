@@ -31,6 +31,8 @@ export interface AdminAccountSummary {
   total_collected: number;
   online_collected: number;
   manual_collected: number;
+  total_disbursed: number;
+  expense_count: number;
 }
 
 export interface AdminAccountDetail extends AdminAccountSummary {

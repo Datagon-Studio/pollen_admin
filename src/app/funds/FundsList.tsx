@@ -3,45 +3,80 @@ import { useQuery } from "@tanstack/react-query";
 import { Loader2, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { SectionPage } from "@/components/pages/SectionPage";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { adminApi } from "@/services/admin.api";
+import { adminApi, type AdminFundSummary } from "@/services/admin.api";
 import { formatCurrency, formatDate } from "@/lib/format";
+
+const SELECT_CLASS =
+  "h-10 rounded-md border border-input bg-background px-3 text-sm min-w-[10.5rem]";
 
 export default function FundsList() {
   const [search, setSearch] = useState("");
+  const [accountFilter, setAccountFilter] = useState("all");
+  const [collectedFilter, setCollectedFilter] = useState("all");
+  const [goalFilter, setGoalFilter] = useState("all");
   const [activeFilter, setActiveFilter] = useState("all");
   const [visibilityFilter, setVisibilityFilter] = useState("all");
 
   const { data: funds = [], isLoading, error } = useQuery({
-    queryKey: ["admin-funds", activeFilter, visibilityFilter],
-    queryFn: () =>
-      adminApi.listFunds({
-        isActive:
-          activeFilter === "active"
-            ? true
-            : activeFilter === "inactive"
-              ? false
-              : undefined,
-        isPublic:
-          visibilityFilter === "public"
-            ? true
-            : visibilityFilter === "private"
-              ? false
-              : undefined,
-      }),
+    queryKey: ["admin-funds"],
+    queryFn: () => adminApi.listFunds(),
   });
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return funds;
-    return funds.filter(
-      (f) =>
-        f.fund_name.toLowerCase().includes(q) ||
-        (f.account_name?.toLowerCase().includes(q) ?? false)
-    );
-  }, [funds, search]);
+  const accountOptions = useMemo(() => {
+    const names = new Map<string, string>();
+    for (const f of funds) {
+      if (!names.has(f.account_id)) {
+        names.set(f.account_id, f.account_name || "Unnamed account");
+      }
+    }
+    return [...names.entries()]
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [funds]);
+
+  const filtered = useMemo(
+    () =>
+      funds.filter((f) =>
+        matchesFundFilters(f, {
+          search,
+          accountFilter,
+          collectedFilter,
+          goalFilter,
+          activeFilter,
+          visibilityFilter,
+        })
+      ),
+    [
+      funds,
+      search,
+      accountFilter,
+      collectedFilter,
+      goalFilter,
+      activeFilter,
+      visibilityFilter,
+    ]
+  );
+
+  const hasActiveFilters =
+    search.trim() !== "" ||
+    accountFilter !== "all" ||
+    collectedFilter !== "all" ||
+    goalFilter !== "all" ||
+    activeFilter !== "all" ||
+    visibilityFilter !== "all";
+
+  const clearFilters = () => {
+    setSearch("");
+    setAccountFilter("all");
+    setCollectedFilter("all");
+    setGoalFilter("all");
+    setActiveFilter("all");
+    setVisibilityFilter("all");
+  };
 
   return (
     <SectionPage
@@ -49,8 +84,8 @@ export default function FundsList() {
       description="System-wide fund list — collected vs goal, visibility, status. Read-only for staff."
       phase="ready"
     >
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
+      <div className="flex flex-col gap-3">
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search fund or account…"
@@ -59,24 +94,71 @@ export default function FundsList() {
             className="pl-9"
           />
         </div>
-        <select
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-          value={activeFilter}
-          onChange={(e) => setActiveFilter(e.target.value)}
-        >
-          <option value="all">All status</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
-        <select
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-          value={visibilityFilter}
-          onChange={(e) => setVisibilityFilter(e.target.value)}
-        >
-          <option value="all">All visibility</option>
-          <option value="public">Public</option>
-          <option value="private">Private</option>
-        </select>
+        <div className="flex flex-wrap gap-3">
+          <select
+            aria-label="Filter by account"
+            className={SELECT_CLASS}
+            value={accountFilter}
+            onChange={(e) => setAccountFilter(e.target.value)}
+          >
+            <option value="all">All accounts</option>
+            {accountOptions.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </select>
+          <select
+            aria-label="Filter by amount collected"
+            className={SELECT_CLASS}
+            value={collectedFilter}
+            onChange={(e) => setCollectedFilter(e.target.value)}
+          >
+            <option value="all">All collected</option>
+            <option value="none">Nothing collected</option>
+            <option value="has">Has collections</option>
+            <option value="under1k">Under GH₵1,000</option>
+            <option value="1k-10k">GH₵1,000–10,000</option>
+            <option value="10kplus">Over GH₵10,000</option>
+          </select>
+          <select
+            aria-label="Filter by goal progress"
+            className={SELECT_CLASS}
+            value={goalFilter}
+            onChange={(e) => setGoalFilter(e.target.value)}
+          >
+            <option value="all">All goals</option>
+            <option value="none">No goal set</option>
+            <option value="has">Has a goal</option>
+            <option value="under">Under goal</option>
+            <option value="met">Goal met</option>
+          </select>
+          <select
+            aria-label="Filter by status"
+            className={SELECT_CLASS}
+            value={activeFilter}
+            onChange={(e) => setActiveFilter(e.target.value)}
+          >
+            <option value="all">All status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+          <select
+            aria-label="Filter by visibility"
+            className={SELECT_CLASS}
+            value={visibilityFilter}
+            onChange={(e) => setVisibilityFilter(e.target.value)}
+          >
+            <option value="all">All visibility</option>
+            <option value="public">Public</option>
+            <option value="private">Private</option>
+          </select>
+          {hasActiveFilters && (
+            <Button type="button" variant="ghost" onClick={clearFilters}>
+              Clear filters
+            </Button>
+          )}
+        </div>
       </div>
 
       {isLoading && (
@@ -115,7 +197,9 @@ export default function FundsList() {
                 {filtered.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="p-8 text-center text-muted-foreground">
-                      No funds found
+                      {hasActiveFilters
+                        ? "No funds match your filters"
+                        : "No funds found"}
                     </td>
                   </tr>
                 ) : (
@@ -162,4 +246,55 @@ export default function FundsList() {
       )}
     </SectionPage>
   );
+}
+
+function matchesFundFilters(
+  f: AdminFundSummary,
+  filters: {
+    search: string;
+    accountFilter: string;
+    collectedFilter: string;
+    goalFilter: string;
+    activeFilter: string;
+    visibilityFilter: string;
+  }
+): boolean {
+  const q = filters.search.trim().toLowerCase();
+  if (q) {
+    const haystack = `${f.fund_name} ${f.account_name ?? ""}`.toLowerCase();
+    if (!haystack.includes(q)) return false;
+  }
+
+  if (filters.accountFilter !== "all" && f.account_id !== filters.accountFilter) {
+    return false;
+  }
+
+  const collected = f.amount_collected;
+  if (filters.collectedFilter === "none" && collected !== 0) return false;
+  if (filters.collectedFilter === "has" && collected <= 0) return false;
+  if (filters.collectedFilter === "under1k") {
+    if (collected <= 0 || collected >= 1000) return false;
+  }
+  if (filters.collectedFilter === "1k-10k") {
+    if (collected < 1000 || collected >= 10_000) return false;
+  }
+  if (filters.collectedFilter === "10kplus" && collected < 10_000) return false;
+
+  const goal = f.fund_goal;
+  if (filters.goalFilter === "none" && goal != null) return false;
+  if (filters.goalFilter === "has" && goal == null) return false;
+  if (filters.goalFilter === "under") {
+    if (goal == null || collected >= goal) return false;
+  }
+  if (filters.goalFilter === "met") {
+    if (goal == null || collected < goal) return false;
+  }
+
+  if (filters.activeFilter === "active" && !f.is_active) return false;
+  if (filters.activeFilter === "inactive" && f.is_active) return false;
+
+  if (filters.visibilityFilter === "public" && !f.is_public) return false;
+  if (filters.visibilityFilter === "private" && f.is_public) return false;
+
+  return true;
 }
