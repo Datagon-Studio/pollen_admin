@@ -39,7 +39,7 @@ The portal is **not** for group managers, officers, collectors, or members.
 1. Give Pollean system admins a dedicated portal to **observe and operate the whole platform**.
 2. Move **KYC review** out of the group dashboard and into this portal.
 3. Let ops **list, inspect, and deactivate accounts**; view members, funds, contributions, and settlements across all groups.
-4. Let ops **process settlement requests** (pending → successful / canceled) and notify the right people.
+4. Let ops **process settlement requests** (pending → approved / rejected → disbursed) and notify the right people.
 5. Treat **financial records as immutable** for audit: archive / reverse, never hard-delete online contributions; restrict manual contribution deletion.
 6. Handle **multi-group membership** without duplicate-looking people and without mixing one group’s actions with another.
 7. Ship as a **separate frontend** that talks to the existing Pollean API and does not grant system-admin powers to group roles.
@@ -367,11 +367,13 @@ Group manager creates request
         → status: pending
         → email to Pollean ops (+ copy to requesting manager)
 Ops or super admin reviews
-        → successful  (payout done)
-        → canceled    (will not pay; reason required)
+        → approved    (request accepted)
+        → rejected    (will not pay; reason required)
+Approved request
+        → disbursed   (payout completed)
 ```
 
-No skip from empty to successful without a request record.
+No payout can be marked disbursed without an approved request record.
 
 #### Table columns
 
@@ -382,11 +384,11 @@ Filters: status, account, fund, date.
 #### Detail
 
 - Account + fund (links).
-- Amount requested vs amount collected on that fund vs already settled (sum of successful requests for that fund).
+- Amount requested vs amount collected on that fund vs already settled (sum of disbursed requests for that fund).
 - Destination snapshot **at request time** (do not silently use a destination edited later).
 - Requester (group manager user).
 - Status history (who, when, from → to, note).
-- Actions: Mark successful, Cancel — both require a note. Successful may record provider reference / transfer date.
+- Actions: Approve, Reject, Mark disbursed. Rejection requires a reason; disbursement may record a provider reference / transfer date.
 
 **Track per fund:** fund detail and account detail list all requests for that fund. Prevent over-settling in UX: warn if requested amount > unsettled confirmed online (and/or total) balance. Exact eligible-balance rule is an Open question.
 
@@ -510,7 +512,7 @@ Portal access requires `users.role` to be one of **`superadmin`**, **`ops`**, or
 | Deactivate / reactivate account | Yes | No | No | No | No | No |
 | Approve / reject KYC | Yes | Yes | No | Submit only | No | No |
 | View KYC documents | Yes | Yes | No | Own submission only | No | No |
-| Mark settlement successful / canceled | Yes | Yes | No | No (can cancel own pending? — Open question) | No | No |
+| Approve / reject / disburse settlement | Yes | Yes | No | No | No | No |
 | Manage staff admins (invite, change role, revoke) | Yes | No | No | No | No | No |
 | Create / edit contributions | No | No | No | Yes (manual) | Yes (manual) | Pay online only |
 | Create settlement request | No | No | No | Yes | No | No |
@@ -547,7 +549,7 @@ The new portal cannot succeed as a UI-only app. The current `pollen_frontend` / 
 
 1. **Expose admin APIs** (or extend existing ones) for: platform dashboard aggregates, list/get all accounts, deactivate/reactivate, list members/funds/contributions/settlements with filters, KYC queue (already exists), settlement request CRUD + status transitions. All endpoints enforce the role matrix in §11.
 2. **Extend platform roles** in `users.role` to include `ops` and `support` (today: `superadmin`, `admin`, `user`). Add staff-management endpoints for super admin.
-3. **Add settlement request** persistence (not only settlement *details*). Align naming with this PRD (`pending | successful | canceled`).
+3. **Add settlement request** persistence (not only settlement *details*). Statuses: `pending | approved | rejected | disbursed`.
 4. **Add group-workspace UI** to create a settlement request and to see its status.
 5. **Remove** superadmin KYC page from the group app once the admin portal is live (feature-flag during transition).
 6. **Replace hard-delete** of contributions with reverse/void; block delete for `channel = online`.
@@ -585,7 +587,7 @@ Suggested rollout: API + audit rules first, then admin portal, then remove the o
 | --- | --- |
 | KYC handled entirely in admin portal | 100% of approvals/rejections after cutover |
 | Group app has no staff KYC nav | Removed post-cutover |
-| Settlement requests have a status owner | Every request is pending, successful, or canceled |
+| Settlement requests have a status owner | Every request is pending, approved, rejected, or disbursed |
 | Online contribution hard-deletes | Zero |
 | Time to find an account / member | Ops can search and open detail without using the database |
 | Multi-group clarity | QA script: person in two groups; histories and totals never mix unless “All groups” is selected |
@@ -651,7 +653,7 @@ Suggested rollout: API + audit rules first, then admin portal, then remove the o
 - [ ] Members table lists memberships with parent account; clicking through shows contribution history for that account; other groups are listed without mixing totals by default.
 - [ ] Funds and contributions are system-wide, filterable, and read-only for admin.
 - [ ] KYC approve/reject works only in this portal; group settings show status; group app no longer has a verification screen after cutover.
-- [ ] Settlement request can be created by a group manager, emails on create, and admin can set pending → successful or canceled.
+- [ ] Settlement request can be created by a group manager, emails on create, and admin can approve, reject, and mark approved requests as disbursed.
 - [ ] Online contributions cannot be deleted. Manual contributions cannot be hard-deleted; void/reverse retains the row. Audit entries exist for admin writes and reverses.
 
 ---

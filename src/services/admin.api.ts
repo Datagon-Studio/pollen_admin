@@ -162,6 +162,53 @@ export interface AuditLogEntry {
   created_at: string;
 }
 
+export type SettlementRequestStatus =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "disbursed";
+
+export interface AdminSettlementRequest {
+  request_id: string;
+  account_id: string;
+  account_name: string;
+  fund_id: string;
+  fund_name: string;
+  requested_by_user_id: string;
+  requester_name: string | null;
+  requester_email: string | null;
+  amount: number;
+  status: SettlementRequestStatus;
+  request_note: string | null;
+  admin_note: string | null;
+  destination_type: "bank" | "mobile_money";
+  destination_account_name: string;
+  destination_account_number: string;
+  destination_bank_name: string | null;
+  destination_bank_branch: string | null;
+  destination_provider: string | null;
+  reviewed_by_user_id: string | null;
+  reviewed_at: string | null;
+  disbursed_at: string | null;
+  disbursement_reference: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SettlementRequestHistory {
+  history_id: string;
+  previous_status: SettlementRequestStatus | null;
+  new_status: SettlementRequestStatus;
+  changed_by_user_id: string;
+  changed_by_name: string | null;
+  note: string | null;
+  created_at: string;
+}
+
+export interface AdminSettlementRequestDetail extends AdminSettlementRequest {
+  history: SettlementRequestHistory[];
+}
+
 function qs(params: Record<string, string | undefined>): string {
   const search = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {
@@ -172,6 +219,59 @@ function qs(params: Record<string, string | undefined>): string {
 }
 
 export const adminApi = {
+  async listSettlementRequests(params?: {
+    status?: SettlementRequestStatus;
+    accountId?: string;
+    fundId?: string;
+  }): Promise<AdminSettlementRequest[]> {
+    const response = await request<AdminSettlementRequest[]>(
+      `/admin/settlement-requests${qs({
+        status: params?.status,
+        accountId: params?.accountId,
+        fundId: params?.fundId,
+      })}`,
+      { method: "GET" }
+    );
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Failed to load settlement requests");
+    }
+    return response.data;
+  },
+
+  async getSettlementRequest(
+    requestId: string
+  ): Promise<AdminSettlementRequestDetail> {
+    const response = await request<AdminSettlementRequestDetail>(
+      `/admin/settlement-requests/${requestId}`,
+      { method: "GET" }
+    );
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Failed to load settlement request");
+    }
+    return response.data;
+  },
+
+  async updateSettlementRequestStatus(
+    requestId: string,
+    input: {
+      status: Exclude<SettlementRequestStatus, "pending">;
+      note?: string;
+      disbursement_reference?: string;
+    }
+  ): Promise<AdminSettlementRequest> {
+    const response = await request<AdminSettlementRequest>(
+      `/admin/settlement-requests/${requestId}/status`,
+      {
+        method: "POST",
+        body: JSON.stringify(input),
+      }
+    );
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Failed to update settlement request");
+    }
+    return response.data;
+  },
+
   async getDashboard(): Promise<PlatformDashboard> {
     const response = await request<PlatformDashboard>("/admin/dashboard", {
       method: "GET",

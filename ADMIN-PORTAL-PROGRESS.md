@@ -4,7 +4,7 @@ Tracks implementation against [PRD-System-Admin-Portal.md](./PRD-System-Admin-Po
 
 **Repos:** `pollen_admin` (portal UI) · `pollen_frontend/backend` (shared API)
 
-**Last updated:** 2026-09-16
+**Last updated:** 2026-10-08
 
 ---
 
@@ -78,8 +78,8 @@ Tracks implementation against [PRD-System-Admin-Portal.md](./PRD-System-Admin-Po
 | `/contributions/:id` | ✅ | Read-only detail |
 | `/kyc` | ✅ | Queue, verify/reject, documents |
 | `/kyc/:id` | ⬜ | Detail route exists as placeholder |
-| `/settlements` | ⬜ | Placeholder — needs settlement request schema |
-| `/settlements/:id` | ⬜ | Placeholder |
+| `/settlements` | 🟡 | Frontend queue implemented; backend/API deferred |
+| `/settlements/:id` | 🟡 | Frontend payment details, history, and status actions implemented |
 | `/settings/staff` | ⬜ | Placeholder — needs staff CRUD API |
 
 ---
@@ -90,7 +90,7 @@ Tracks implementation against [PRD-System-Admin-Portal.md](./PRD-System-Admin-Po
 
 | Feature | Status | Notes |
 | --- | --- | --- |
-| Settlement requests (schema + API + queue) | ⬜ | PRD §8.6 — `settlement_requests` table does not exist yet |
+| Settlement requests (schema + API + queue) | 🟡 | Manager/admin frontend implemented; backend and persistence deferred |
 | Staff management (invite ops/support/superadmin) | ⬜ | PRD §8.7 |
 | Extend `users.role` constraint for `ops`, `support` | ⬜ | SQL migration needed |
 | KYC email notifications on approve/reject | ⬜ | PRD should-have |

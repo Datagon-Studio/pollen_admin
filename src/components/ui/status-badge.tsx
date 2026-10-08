@@ -2,6 +2,8 @@ import { cn } from "@/lib/utils";
 
 type StatusType =
   | "pending"
+  | "approved"
+  | "disbursed"
   | "confirmed"
   | "failed"
   | "reversed"
@@ -20,6 +22,8 @@ interface StatusBadgeProps {
 
 const statusStyles: Record<StatusType, string> = {
   pending: "bg-warning/15 text-warning border-warning/40",
+  approved: "bg-success/15 text-success border-success/40",
+  disbursed: "bg-blue-500/15 text-blue-700 border-blue-500/40 dark:text-blue-300",
   confirmed: "bg-success/15 text-success border-success/40",
   failed: "bg-destructive/15 text-destructive border-destructive/40",
   reversed: "bg-muted text-muted-foreground border-border",
@@ -33,6 +37,8 @@ const statusStyles: Record<StatusType, string> = {
 
 const statusLabels: Record<StatusType, string> = {
   pending: "Pending",
+  approved: "Approved",
+  disbursed: "Disbursed",
   confirmed: "Confirmed",
   failed: "Failed",
   reversed: "Reversed",
