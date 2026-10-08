@@ -56,4 +56,4 @@ npm run dev
 
 ## Deploy
 
-Separate Vercel project (target: `admin.pollean.com`). Set `VITE_SUPABASE_*` env vars and ensure API CORS allows the admin origin.
+Separate Vercel project (target: `admin.pollean.com`). Set `VITE_SUPABASE_*` env vars and ensure API CORS allows the admin origin..
