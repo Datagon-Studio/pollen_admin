@@ -96,7 +96,20 @@ export default function SettlementDetail() {
                     <dt className="text-muted-foreground">Requested</dt>
                     <dd>{formatDate(data.created_at)}</dd>
                   </div>
+                  <div>
+                    <dt className="text-muted-foreground">Collected on this fund</dt>
+                    <dd>{formatCurrency(Number(data.fund_collected ?? 0))}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Already disbursed</dt>
+                    <dd>{formatCurrency(Number(data.fund_disbursed ?? 0))}</dd>
+                  </div>
                 </dl>
+                {Number(data.amount) > Number(data.fund_collected ?? 0) - Number(data.fund_disbursed ?? 0) && (
+                  <p className="mt-4 text-sm text-amber-500">
+                    Requested amount is larger than the unsettled confirmed balance on this fund.
+                  </p>
+                )}
                 {data.request_note && (
                   <div className="mt-5 border-t pt-4">
                     <p className="text-sm text-muted-foreground">Manager note</p>

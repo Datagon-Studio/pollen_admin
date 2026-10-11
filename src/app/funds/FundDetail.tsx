@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ContributionTable } from "@/components/catalog/ContributionTable";
+import { SettlementRequestTable } from "@/components/settlements/SettlementRequestTable";
 import { adminApi } from "@/services/admin.api";
 import { formatCurrency, formatDate } from "@/lib/format";
 
@@ -15,6 +16,11 @@ export default function FundDetail() {
   const { data: fund, isLoading, error } = useQuery({
     queryKey: ["admin-fund", id],
     queryFn: () => adminApi.getFund(id!),
+    enabled: !!id,
+  });
+  const { data: settlementRequests = [], isLoading: settlementsLoading } = useQuery({
+    queryKey: ["settlement-requests", "fund", id],
+    queryFn: () => adminApi.listSettlementRequests({ fundId: id! }),
     enabled: !!id,
   });
 
@@ -102,12 +108,26 @@ export default function FundDetail() {
             <p className="font-mono text-xs text-muted-foreground mt-2">
               {fund.account_id}
             </p>
-            <p className="text-muted-foreground mt-4 text-xs">
-              Settlement requests — coming when settlement API ships
-            </p>
           </CardContent>
         </Card>
       </div>
+
+      <Card className="mt-4">
+        <CardHeader>
+          <CardTitle className="text-base">Settlement requests</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {settlementsLoading && (
+            <p className="text-sm text-muted-foreground">Loading requests…</p>
+          )}
+          {!settlementsLoading && settlementRequests.length === 0 && (
+            <p className="text-sm text-muted-foreground">No settlement requests for this fund.</p>
+          )}
+          {settlementRequests.length > 0 && (
+            <SettlementRequestTable requests={settlementRequests} hideFund />
+          )}
+        </CardContent>
+      </Card>
 
       <Card className="mt-4">
         <CardHeader>

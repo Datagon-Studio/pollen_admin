@@ -207,6 +207,8 @@ export interface SettlementRequestHistory {
 
 export interface AdminSettlementRequestDetail extends AdminSettlementRequest {
   history: SettlementRequestHistory[];
+  fund_collected: number;
+  fund_disbursed: number;
 }
 
 function qs(params: Record<string, string | undefined>): string {

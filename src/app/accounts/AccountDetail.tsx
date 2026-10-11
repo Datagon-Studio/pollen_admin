@@ -11,6 +11,7 @@ import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ContributionTable } from "@/components/catalog/ContributionTable";
 import { AuditLogTable } from "@/components/audit/AuditLogTable";
+import { SettlementRequestTable } from "@/components/settlements/SettlementRequestTable";
 import { adminApi } from "@/services/admin.api";
 import { kycApi } from "@/services/kyc.api";
 import { useStaffRole } from "@/hooks/useStaffRole";
@@ -22,6 +23,7 @@ const TAB_IDS = [
   "funds",
   "team",
   "contributions",
+  "settlements",
   "kyc",
   "audit",
 ] as const;
@@ -34,6 +36,7 @@ const tabs: TabItem[] = [
   { id: "funds", label: "Funds" },
   { id: "team", label: "Manager & officers" },
   { id: "contributions", label: "Contributions" },
+  { id: "settlements", label: "Settlements" },
   { id: "kyc", label: "KYC" },
   { id: "audit", label: "Audit" },
 ];
@@ -91,6 +94,12 @@ export default function AccountDetail() {
     queryKey: ["admin-account-kyc", id],
     queryFn: () => adminApi.getAccountKyc(id!),
     enabled: !!id && activeTab === "kyc",
+  });
+
+  const { data: settlementRequests = [], isLoading: settlementsLoading } = useQuery({
+    queryKey: ["settlement-requests", "account", id],
+    queryFn: () => adminApi.listSettlementRequests({ accountId: id! }),
+    enabled: !!id && activeTab === "settlements",
   });
 
   const { data: auditLogs = [], isLoading: auditLoading } = useQuery({
@@ -424,6 +433,16 @@ export default function AccountDetail() {
                 )}
               </CardContent>
             </Card>
+          </TabPanel>
+        )}
+
+        {activeTab === "settlements" && (
+          <TabPanel
+            loading={settlementsLoading}
+            empty={settlementRequests.length === 0}
+            emptyLabel="No settlement requests for this account"
+          >
+            <SettlementRequestTable requests={settlementRequests} hideAccount />
           </TabPanel>
         )}
 
