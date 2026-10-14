@@ -1,4 +1,6 @@
 import { Fragment, useMemo, useState } from "react";
+import { useSortedRows } from "@/lib/table-sort";
+import { SortableTh } from "@/components/ui/sortable-th";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Building2,
@@ -48,6 +50,23 @@ export default function KycQueue() {
       return matchesSearch && matchesStatus && matchesType;
     });
   }, [kycList, searchQuery, statusFilter, typeFilter]);
+
+  const kycSort = useSortedRows(filteredKYC, (kyc, column) => {
+    switch (column) {
+      case "account":
+        return kyc.account_name || "Unnamed account";
+      case "official":
+        return kyc.official_name;
+      case "type":
+        return kyc.account_type;
+      case "status":
+        return kyc.account_kyc_status || "unverified";
+      case "submitted":
+        return kyc.created_at;
+      default:
+        return "";
+    }
+  });
 
   const toggleRow = (kycId: string) => {
     const next = new Set(expandedRows);
@@ -175,16 +194,16 @@ export default function KycQueue() {
             <thead className="bg-muted/50 border-b">
               <tr>
                 <th className="w-10 p-3" />
-                <th className="text-left p-3 font-medium">Account</th>
-                <th className="text-left p-3 font-medium">Official name</th>
-                <th className="text-left p-3 font-medium">Type</th>
-                <th className="text-left p-3 font-medium">Status</th>
-                <th className="text-left p-3 font-medium">Submitted</th>
+                <SortableTh label="Account" column="account" sortColumn={kycSort.sortColumn} sortDirection={kycSort.sortDirection} onSort={kycSort.onSort} />
+                <SortableTh label="Official name" column="official" sortColumn={kycSort.sortColumn} sortDirection={kycSort.sortDirection} onSort={kycSort.onSort} />
+                <SortableTh label="Type" column="type" sortColumn={kycSort.sortColumn} sortDirection={kycSort.sortDirection} onSort={kycSort.onSort} />
+                <SortableTh label="Status" column="status" sortColumn={kycSort.sortColumn} sortDirection={kycSort.sortDirection} onSort={kycSort.onSort} />
+                <SortableTh label="Submitted" column="submitted" sortColumn={kycSort.sortColumn} sortDirection={kycSort.sortDirection} onSort={kycSort.onSort} />
                 <th className="text-right p-3 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredKYC.map((kyc) => {
+              {kycSort.sorted.map((kyc) => {
                 const isExpanded = expandedRows.has(kyc.kyc_id);
                 const status = kyc.account_kyc_status || "unverified";
                 return (

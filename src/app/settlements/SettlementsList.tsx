@@ -10,6 +10,8 @@ import {
   SettlementRequestStatus,
 } from "@/services/admin.api";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { useSortedRows } from "@/lib/table-sort";
+import { SortableTh } from "@/components/ui/sortable-th";
 
 const filters: Array<"all" | SettlementRequestStatus> = [
   "all",
@@ -40,6 +42,27 @@ export default function SettlementsList() {
         request.requester_name?.toLowerCase().includes(query)
     );
   }, [data, search]);
+
+  const requestSort = useSortedRows(filtered, (request, column) => {
+    switch (column) {
+      case "requested":
+        return request.created_at;
+      case "account":
+        return request.account_name;
+      case "fund":
+        return request.fund_name;
+      case "requester":
+        return request.requester_name || request.requester_email || "Unknown";
+      case "amount":
+        return Number(request.amount);
+      case "details":
+        return request.destination_account_name;
+      case "status":
+        return request.status;
+      default:
+        return "";
+    }
+  });
 
   return (
     <SectionPage
@@ -74,18 +97,18 @@ export default function SettlementsList() {
           <table className="w-full text-sm">
             <thead className="border-b bg-muted/30">
               <tr>
-                <th className="text-left p-3 font-medium">Requested</th>
-                <th className="text-left p-3 font-medium">Account</th>
-                <th className="text-left p-3 font-medium">Fund</th>
-                <th className="text-left p-3 font-medium">Requester</th>
-                <th className="text-right p-3 font-medium">Amount</th>
-                <th className="text-left p-3 font-medium">Payment details</th>
-                <th className="text-left p-3 font-medium">Status</th>
+                <SortableTh label="Requested" column="requested" sortColumn={requestSort.sortColumn} sortDirection={requestSort.sortDirection} onSort={requestSort.onSort} />
+                <SortableTh label="Account" column="account" sortColumn={requestSort.sortColumn} sortDirection={requestSort.sortDirection} onSort={requestSort.onSort} />
+                <SortableTh label="Fund" column="fund" sortColumn={requestSort.sortColumn} sortDirection={requestSort.sortDirection} onSort={requestSort.onSort} />
+                <SortableTh label="Requester" column="requester" sortColumn={requestSort.sortColumn} sortDirection={requestSort.sortDirection} onSort={requestSort.onSort} />
+                <SortableTh label="Amount" column="amount" align="right" sortColumn={requestSort.sortColumn} sortDirection={requestSort.sortDirection} onSort={requestSort.onSort} />
+                <SortableTh label="Payment details" column="details" sortColumn={requestSort.sortColumn} sortDirection={requestSort.sortDirection} onSort={requestSort.onSort} />
+                <SortableTh label="Status" column="status" sortColumn={requestSort.sortColumn} sortDirection={requestSort.sortDirection} onSort={requestSort.onSort} />
                 <th className="p-3" />
               </tr>
             </thead>
             <tbody className="divide-y">
-              {filtered.map((request) => (
+              {requestSort.sorted.map((request) => (
                 <tr key={request.request_id} className="hover:bg-muted/20">
                   <td className="p-3 text-muted-foreground">
                     {formatDate(request.created_at)}

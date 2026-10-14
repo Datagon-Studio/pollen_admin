@@ -1,4 +1,6 @@
 import { formatDate } from "@/lib/format";
+import { useSortedRows } from "@/lib/table-sort";
+import { SortableTh } from "@/components/ui/sortable-th";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { AuditLogEntry } from "@/services/admin.api";
 
@@ -24,6 +26,25 @@ export function AuditLogTable({
   showAccount = false,
   emptyMessage = "No audit events",
 }: AuditLogTableProps) {
+  const logSort = useSortedRows(logs, (log, column) => {
+    switch (column) {
+      case "when":
+        return log.created_at;
+      case "category":
+        return categoryLabels[log.action_category] || log.action_category;
+      case "action":
+        return log.action_type;
+      case "account":
+        return log.account_id || "";
+      case "status":
+        return log.status;
+      case "details":
+        return log.error_message || (log.action_details ? JSON.stringify(log.action_details) : "");
+      default:
+        return "";
+    }
+  });
+
   if (logs.length === 0) {
     return <p className="text-sm text-muted-foreground py-4">{emptyMessage}</p>;
   }
@@ -33,16 +54,18 @@ export function AuditLogTable({
       <table className="w-full text-sm">
         <thead className="bg-muted/50 border-b">
           <tr>
-            <th className="text-left p-3 font-medium">When</th>
-            <th className="text-left p-3 font-medium">Category</th>
-            <th className="text-left p-3 font-medium">Action</th>
-            {showAccount && <th className="text-left p-3 font-medium">Account</th>}
-            <th className="text-left p-3 font-medium">Status</th>
-            <th className="text-left p-3 font-medium">Details</th>
+            <SortableTh label="When" column="when" sortColumn={logSort.sortColumn} sortDirection={logSort.sortDirection} onSort={logSort.onSort} />
+            <SortableTh label="Category" column="category" sortColumn={logSort.sortColumn} sortDirection={logSort.sortDirection} onSort={logSort.onSort} />
+            <SortableTh label="Action" column="action" sortColumn={logSort.sortColumn} sortDirection={logSort.sortDirection} onSort={logSort.onSort} />
+            {showAccount && (
+              <SortableTh label="Account" column="account" sortColumn={logSort.sortColumn} sortDirection={logSort.sortDirection} onSort={logSort.onSort} />
+            )}
+            <SortableTh label="Status" column="status" sortColumn={logSort.sortColumn} sortDirection={logSort.sortDirection} onSort={logSort.onSort} />
+            <SortableTh label="Details" column="details" sortColumn={logSort.sortColumn} sortDirection={logSort.sortDirection} onSort={logSort.onSort} />
           </tr>
         </thead>
         <tbody>
-          {logs.map((log) => (
+          {logSort.sorted.map((log) => (
             <tr key={log.audit_id} className="border-b last:border-0 hover:bg-muted/30 align-top">
               <td className="p-3 whitespace-nowrap text-muted-foreground">
                 {formatDate(log.created_at)}
