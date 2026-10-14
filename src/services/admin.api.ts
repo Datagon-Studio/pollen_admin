@@ -201,6 +201,7 @@ export interface SettlementRequestHistory {
   new_status: SettlementRequestStatus;
   changed_by_user_id: string;
   changed_by_name: string | null;
+  changed_by_email: string | null;
   note: string | null;
   created_at: string;
 }

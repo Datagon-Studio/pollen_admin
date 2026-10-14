@@ -237,7 +237,8 @@ export default function SettlementDetail() {
                     <StatusBadge status={event.new_status} />
                     <div>
                       <p>
-                        {event.changed_by_name || "User"} · {formatDate(event.created_at)}
+                        {event.changed_by_name || event.changed_by_email || "Unknown"} ·{" "}
+                        {formatDate(event.created_at)}
                       </p>
                       {event.note && (
                         <p className="text-muted-foreground mt-0.5">{event.note}</p>
