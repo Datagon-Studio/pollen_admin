@@ -14,6 +14,7 @@ import {
   Moon,
   Sun,
   ScrollText,
+  UserRound,
 } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "next-themes";
@@ -43,6 +44,7 @@ const navItems: NavItem[] = [
   { label: "Settlements", href: "/settlements", icon: Landmark, complianceOnly: true },
   { label: "KYC", href: "/kyc", icon: ShieldCheck, complianceOnly: true },
   { label: "Staff", href: "/settings/staff", icon: Settings, platformAdminOnly: true },
+  { label: "Profile", href: "/profile", icon: UserRound },
 ];
 
 const envLabel = import.meta.env.VITE_APP_ENV || import.meta.env.MODE;

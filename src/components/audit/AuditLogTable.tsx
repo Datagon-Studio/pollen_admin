@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+import { Link } from "react-router-dom";
 import { formatDate } from "@/lib/format";
 import { useSortedRows } from "@/lib/table-sort";
 import { SortableTh } from "@/components/ui/sortable-th";
@@ -18,15 +20,33 @@ const categoryLabels: Record<string, string> = {
 type AuditLogTableProps = {
   logs: AuditLogEntry[];
   showAccount?: boolean;
+  accountNames?: ReadonlyMap<string, string | null>;
   emptyMessage?: string;
 };
+
+function accountName(
+  accountId: string | null,
+  accountNames?: ReadonlyMap<string, string | null>
+): string {
+  if (!accountId) return "";
+  return accountNames?.get(accountId)?.trim() || "Unnamed account";
+}
 
 export function AuditLogTable({
   logs,
   showAccount = false,
+  accountNames,
   emptyMessage = "No audit events",
 }: AuditLogTableProps) {
-  const logSort = useSortedRows(logs, (log, column) => {
+  const namedLogs = useMemo(
+    () =>
+      logs.map((log) => ({
+        ...log,
+        account_label: accountName(log.account_id, accountNames),
+      })),
+    [logs, accountNames]
+  );
+  const logSort = useSortedRows(namedLogs, (log, column) => {
     switch (column) {
       case "when":
         return log.created_at;
@@ -35,7 +55,7 @@ export function AuditLogTable({
       case "action":
         return log.action_type;
       case "account":
-        return log.account_id || "";
+        return log.account_label;
       case "status":
         return log.status;
       case "details":
@@ -45,7 +65,7 @@ export function AuditLogTable({
     }
   });
 
-  if (logs.length === 0) {
+  if (namedLogs.length === 0) {
     return <p className="text-sm text-muted-foreground py-4">{emptyMessage}</p>;
   }
 
@@ -75,8 +95,25 @@ export function AuditLogTable({
               </td>
               <td className="p-3 font-mono text-xs">{log.action_type}</td>
               {showAccount && (
-                <td className="p-3 font-mono text-xs text-muted-foreground max-w-[140px] truncate">
-                  {log.account_id || "—"}
+                <td className="p-3 max-w-[16rem]">
+                  {log.account_id ? (
+                    <>
+                      <Link
+                        to={`/accounts/${log.account_id}`}
+                        className="font-medium hover:underline"
+                      >
+                        {log.account_label}
+                      </Link>
+                      <p
+                        className="font-mono text-xs text-muted-foreground mt-0.5 truncate"
+                        title={log.account_id}
+                      >
+                        {log.account_id}
+                      </p>
+                    </>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
                 </td>
               )}
               <td className="p-3">
