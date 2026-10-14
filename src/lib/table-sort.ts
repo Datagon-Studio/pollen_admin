@@ -36,25 +36,23 @@ export function useSortedRows<T>(
   valueForRef.current = valueFor;
 
   const onSort = (column: string) => {
-    setSortColumn((current) => {
-      if (current === column) {
-        setSortDirection((direction) => (direction === "asc" ? "desc" : "asc"));
-        return current;
-      }
-      setSortDirection("asc");
-      return column;
-    });
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+      return;
+    }
+    setSortColumn(column);
+    setSortDirection("asc");
   };
 
   const sorted = useMemo(() => {
     if (!sortColumn) return rows;
-    return [...rows].sort((a, b) => {
-      const comparison = compareSortValues(
+    const ordered = [...rows].sort((a, b) =>
+      compareSortValues(
         valueForRef.current(a, sortColumn),
         valueForRef.current(b, sortColumn),
-      );
-      return sortDirection === "asc" ? comparison : -comparison;
-    });
+      ),
+    );
+    return sortDirection === "desc" ? ordered.reverse() : ordered;
   }, [rows, sortColumn, sortDirection]);
 
   return { sorted, sortColumn, sortDirection, onSort };
