@@ -114,9 +114,9 @@ export default function MembersList() {
             <option value="all">All contributions</option>
             <option value="none">No contributions</option>
             <option value="has">Has contributions</option>
-            <option value="under1k">Under GH₵1,000</option>
-            <option value="1k-10k">GH₵1,000–10,000</option>
-            <option value="10kplus">Over GH₵10,000</option>
+            <option value="under1k">Under GHS 1,000</option>
+            <option value="1k-10k">GHS 1,000–10,000</option>
+            <option value="10kplus">Over GHS 10,000</option>
           </select>
           <select
             aria-label="Filter by verification"

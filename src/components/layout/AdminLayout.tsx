@@ -107,7 +107,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           <NavLinks />
         </nav>
         <div className="p-4 border-t border-sidebar-border text-xs text-sidebar-foreground/60">
-          Platform-wide · GH₵ · Africa/Accra
+          Platform-wide · GHS · Africa/Accra
         </div>
       </aside>
 

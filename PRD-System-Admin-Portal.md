@@ -195,7 +195,7 @@ Deep links between objects are required (see §9). Breadcrumbs always include th
 
 **Purpose:** Platform pulse for ops. Not a group dashboard.
 
-**Metrics (always labeled as platform-wide, GH₵):**
+**Metrics (always labeled as platform-wide, GHS):**
 
 | Metric | Definition |
 | --- | --- |
@@ -565,7 +565,7 @@ Suggested rollout: API + audit rules first, then admin portal, then remove the o
 - Stack may match the group app (React, Vite, TypeScript, Tailwind, TanStack Query) for speed and design consistency; not mandated by this PRD.
 - Auth: Bearer Supabase JWT. Idle timeout comparable to the group app (~20 minutes) is recommended for a staff tool.
 - Hosting: separate Vercel project. CORS and cookie/host assumptions must allow `admin.pollean.com` to call the API. If the API is same-origin on `app.pollean.com` today, introduce a stable API base URL for both frontends.
-- Currency: GHS / GH₵. Timezone for “month” metrics: Africa/Accra.
+- Currency: GHS. Timezone for “month” metrics: Africa/Accra.
 - No second database.
 
 ---

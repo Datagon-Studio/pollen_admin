@@ -117,9 +117,9 @@ export default function FundsList() {
             <option value="all">All collected</option>
             <option value="none">Nothing collected</option>
             <option value="has">Has collections</option>
-            <option value="under1k">Under GH₵1,000</option>
-            <option value="1k-10k">GH₵1,000–10,000</option>
-            <option value="10kplus">Over GH₵10,000</option>
+            <option value="under1k">Under GHS 1,000</option>
+            <option value="1k-10k">GHS 1,000–10,000</option>
+            <option value="10kplus">Over GHS 10,000</option>
           </select>
           <select
             aria-label="Filter by goal progress"

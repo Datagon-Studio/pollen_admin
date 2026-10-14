@@ -154,10 +154,10 @@ export default function ContributionsList() {
             onChange={(e) => setAmountFilter(e.target.value)}
           >
             <option value="all">All amounts</option>
-            <option value="under100">Under GH₵100</option>
-            <option value="100-1k">GH₵100–1,000</option>
-            <option value="1k-10k">GH₵1,000–10,000</option>
-            <option value="10kplus">Over GH₵10,000</option>
+            <option value="under100">Under GHS 100</option>
+            <option value="100-1k">GHS 100–1,000</option>
+            <option value="1k-10k">GHS 1,000–10,000</option>
+            <option value="10kplus">Over GHS 10,000</option>
           </select>
           <select
             aria-label="Filter by member"
