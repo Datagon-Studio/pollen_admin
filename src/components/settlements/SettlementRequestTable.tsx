@@ -5,6 +5,8 @@ import type { AdminSettlementRequest } from "@/services/admin.api";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { useSortedRows } from "@/lib/table-sort";
 import { SortableTh } from "@/components/ui/sortable-th";
+import { TablePagination } from "@/components/ui/table-pagination";
+import { usePagination } from "@/hooks/usePagination";
 
 export function SettlementRequestTable({
   requests,
@@ -31,8 +33,14 @@ export function SettlementRequestTable({
         return "";
     }
   });
+  const pagination = usePagination(
+    requestSort.sorted,
+    undefined,
+    requests.map((request) => request.request_id).join(",")
+  );
 
   return (
+    <div className="space-y-3">
     <div className="rounded-lg border bg-card overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="border-b bg-muted/30">
@@ -50,7 +58,7 @@ export function SettlementRequestTable({
           </tr>
         </thead>
         <tbody className="divide-y">
-          {requestSort.sorted.map((request) => (
+          {pagination.paginatedItems.map((request) => (
             <tr key={request.request_id} className="hover:bg-muted/20">
               <td className="p-3 text-muted-foreground">{formatDate(request.created_at)}</td>
               {!hideAccount && (
@@ -72,6 +80,15 @@ export function SettlementRequestTable({
           ))}
         </tbody>
       </table>
+    </div>
+    <TablePagination
+      page={pagination.page}
+      totalPages={pagination.totalPages}
+      totalItems={pagination.totalItems}
+      rangeStart={pagination.rangeStart}
+      rangeEnd={pagination.rangeEnd}
+      onPageChange={pagination.setPage}
+    />
     </div>
   );
 }

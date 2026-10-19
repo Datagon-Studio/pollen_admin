@@ -10,6 +10,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { adminApi, type AdminMemberSummary } from "@/services/admin.api";
+import { TablePagination } from "@/components/ui/table-pagination";
+import { usePagination } from "@/hooks/usePagination";
 import { formatCurrency, formatDate } from "@/lib/format";
 
 const SELECT_CLASS =
@@ -71,6 +73,11 @@ export default function MembersList() {
         return "";
     }
   });
+  const pagination = usePagination(
+    memberSort.sorted,
+    undefined,
+    `${search}|${accountFilter}|${groupsFilter}|${contribFilter}|${verifiedFilter}`
+  );
 
   const hasActiveFilters =
     search.trim() !== "" ||
@@ -201,7 +208,7 @@ export default function MembersList() {
                     </td>
                   </tr>
                 ) : (
-                  memberSort.sorted.map((m) => (
+                  pagination.paginatedItems.map((m) => (
                     <tr
                       key={m.member_id}
                       className="border-b last:border-0 hover:bg-muted/30"
@@ -247,6 +254,14 @@ export default function MembersList() {
               </tbody>
             </table>
           </div>
+          <TablePagination
+            page={pagination.page}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalItems}
+            rangeStart={pagination.rangeStart}
+            rangeEnd={pagination.rangeEnd}
+            onPageChange={pagination.setPage}
+          />
         </>
       )}
     </SectionPage>

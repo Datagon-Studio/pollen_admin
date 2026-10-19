@@ -17,6 +17,8 @@ import { useSortedRows } from "@/lib/table-sort";
 import { SortableTh } from "@/components/ui/sortable-th";
 import { kycApi } from "@/services/kyc.api";
 import { useStaffRole } from "@/hooks/useStaffRole";
+import { TablePagination } from "@/components/ui/table-pagination";
+import { usePagination } from "@/hooks/usePagination";
 import { formatCurrency, formatDate } from "@/lib/format";
 
 const TAB_IDS = [
@@ -109,6 +111,16 @@ export default function AccountDetail() {
         return "";
     }
   });
+  const memberPage = usePagination(
+    memberSort.sorted,
+    undefined,
+    members.map((member) => member.member_id).join(",")
+  );
+  const fundPage = usePagination(
+    fundSort.sorted,
+    undefined,
+    funds.map((fund) => fund.fund_id).join(",")
+  );
 
   const { data: contributions = [], isLoading: contribLoading } = useQuery({
     queryKey: ["admin-contributions", id],
@@ -309,6 +321,7 @@ export default function AccountDetail() {
 
         {activeTab === "members" && (
           <TabPanel loading={membersLoading} empty={members.length === 0} emptyLabel="No members">
+            <div className="space-y-3">
             <div className="border rounded-lg overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 border-b">
@@ -320,7 +333,7 @@ export default function AccountDetail() {
                   </tr>
                 </thead>
                 <tbody>
-                  {memberSort.sorted.map((m) => (
+                  {memberPage.paginatedItems.map((m) => (
                     <tr key={m.member_id} className="border-b last:border-0 hover:bg-muted/30">
                       <td className="p-3">
                         <Link to={`/members/${m.member_id}`} className="font-medium hover:underline">
@@ -339,11 +352,21 @@ export default function AccountDetail() {
                 </tbody>
               </table>
             </div>
+            <TablePagination
+              page={memberPage.page}
+              totalPages={memberPage.totalPages}
+              totalItems={memberPage.totalItems}
+              rangeStart={memberPage.rangeStart}
+              rangeEnd={memberPage.rangeEnd}
+              onPageChange={memberPage.setPage}
+            />
+            </div>
           </TabPanel>
         )}
 
         {activeTab === "funds" && (
           <TabPanel loading={fundsLoading} empty={funds.length === 0} emptyLabel="No funds">
+            <div className="space-y-3">
             <div className="border rounded-lg overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 border-b">
@@ -355,7 +378,7 @@ export default function AccountDetail() {
                   </tr>
                 </thead>
                 <tbody>
-                  {fundSort.sorted.map((f) => (
+                  {fundPage.paginatedItems.map((f) => (
                     <tr key={f.fund_id} className="border-b last:border-0 hover:bg-muted/30">
                       <td className="p-3">
                         <Link to={`/funds/${f.fund_id}`} className="font-medium hover:underline">
@@ -375,6 +398,15 @@ export default function AccountDetail() {
                   ))}
                 </tbody>
               </table>
+            </div>
+            <TablePagination
+              page={fundPage.page}
+              totalPages={fundPage.totalPages}
+              totalItems={fundPage.totalItems}
+              rangeStart={fundPage.rangeStart}
+              rangeEnd={fundPage.rangeEnd}
+              onPageChange={fundPage.setPage}
+            />
             </div>
           </TabPanel>
         )}

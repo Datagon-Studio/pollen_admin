@@ -1,5 +1,33 @@
 import { request } from "@/lib/api-client";
 
+export type ReportDuration = "7d" | "30d" | "3m" | "6m" | "12m" | "ytd" | "all" | "custom";
+
+export interface PlatformReport {
+  duration: ReportDuration;
+  startDate: string | null;
+  endDate: string | null;
+  recordCount: number;
+  recordsLimited: boolean;
+  summary: {
+    collected: number;
+    online: number;
+    manual: number;
+    contributionCount: number;
+    accountCount: number;
+    fundCount: number;
+    expenses: number;
+    net: number;
+  };
+  trend: Array<{
+    month: string;
+    label: string;
+    online: number;
+    manual: number;
+    total: number;
+  }>;
+  records: AdminContributionRow[];
+}
+
 export interface PlatformDashboard {
   totalAccounts: number;
   activeAccounts: number;
@@ -281,6 +309,29 @@ export const adminApi = {
     });
     if (!response.success || !response.data) {
       throw new Error(response.error || "Failed to load dashboard");
+    }
+    return response.data;
+  },
+
+  async getReport(params: {
+    duration: ReportDuration;
+    dateFrom?: string;
+    dateTo?: string;
+    month?: number;
+    years?: number[];
+  }): Promise<PlatformReport> {
+    const response = await request<PlatformReport>(
+      `/admin/reports${qs({
+        duration: params.duration,
+        dateFrom: params.dateFrom,
+        dateTo: params.dateTo,
+        month: params.month ? String(params.month) : undefined,
+        years: params.years?.length ? params.years.join(",") : undefined,
+      })}`,
+      { method: "GET" }
+    );
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Failed to load report");
     }
     return response.data;
   },

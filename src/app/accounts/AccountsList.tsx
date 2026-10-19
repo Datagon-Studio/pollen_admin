@@ -13,6 +13,8 @@ import {
   type AccountStaffMember,
   type AdminAccountSummary,
 } from "@/services/admin.api";
+import { TablePagination } from "@/components/ui/table-pagination";
+import { usePagination } from "@/hooks/usePagination";
 import { formatCurrency, formatDate } from "@/lib/format";
 
 const COLUMN_COUNT = 8;
@@ -61,6 +63,11 @@ export default function AccountsList() {
         return "";
     }
   });
+  const pagination = usePagination(
+    accountSort.sorted,
+    undefined,
+    `${search}|${statusFilter}|${kycFilter}`
+  );
 
   return (
     <SectionPage
@@ -147,7 +154,7 @@ export default function AccountsList() {
                     </td>
                   </tr>
                 ) : (
-                  accountSort.sorted.map((a) => {
+                  pagination.paginatedItems.map((a) => {
                     const isExpanded = expandedId === a.account_id;
                     return (
                       <AccountRow
@@ -164,6 +171,14 @@ export default function AccountsList() {
               </tbody>
             </table>
           </div>
+          <TablePagination
+            page={pagination.page}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalItems}
+            rangeStart={pagination.rangeStart}
+            rangeEnd={pagination.rangeEnd}
+            onPageChange={pagination.setPage}
+          />
         </>
       )}
     </SectionPage>

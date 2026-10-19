@@ -22,6 +22,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { kycApi } from "@/services/kyc.api";
+import { TablePagination } from "@/components/ui/table-pagination";
+import { usePagination } from "@/hooks/usePagination";
 import { formatDate } from "@/lib/format";
 
 export default function KycQueue() {
@@ -67,6 +69,11 @@ export default function KycQueue() {
         return "";
     }
   });
+  const pagination = usePagination(
+    kycSort.sorted,
+    undefined,
+    `${searchQuery}|${statusFilter}|${typeFilter}`
+  );
 
   const toggleRow = (kycId: string) => {
     const next = new Set(expandedRows);
@@ -203,7 +210,7 @@ export default function KycQueue() {
               </tr>
             </thead>
             <tbody>
-              {kycSort.sorted.map((kyc) => {
+              {pagination.paginatedItems.map((kyc) => {
                 const isExpanded = expandedRows.has(kyc.kyc_id);
                 const status = kyc.account_kyc_status || "unverified";
                 return (
@@ -351,6 +358,14 @@ export default function KycQueue() {
           </table>
         </div>
       )}
+      <TablePagination
+        page={pagination.page}
+        totalPages={pagination.totalPages}
+        totalItems={pagination.totalItems}
+        rangeStart={pagination.rangeStart}
+        rangeEnd={pagination.rangeEnd}
+        onPageChange={pagination.setPage}
+      />
     </SectionPage>
   );
 }

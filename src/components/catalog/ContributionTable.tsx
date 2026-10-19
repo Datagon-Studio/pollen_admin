@@ -3,6 +3,8 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { useSortedRows } from "@/lib/table-sort";
 import { SortableTh } from "@/components/ui/sortable-th";
+import { TablePagination } from "@/components/ui/table-pagination";
+import { usePagination } from "@/hooks/usePagination";
 import type { AdminContributionRow } from "@/services/admin.api";
 
 type ContributionTableProps = {
@@ -36,12 +38,18 @@ export function ContributionTable({
         return "";
     }
   });
+  const pagination = usePagination(
+    rowSort.sorted,
+    undefined,
+    rows.map((row) => row.contribution_id).join(",")
+  );
 
   if (rows.length === 0) {
     return <p className="text-sm text-muted-foreground py-4">{emptyMessage}</p>;
   }
 
   return (
+    <div className="space-y-3">
     <div className="border rounded-lg overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="bg-muted/50 border-b">
@@ -58,7 +66,7 @@ export function ContributionTable({
           </tr>
         </thead>
         <tbody>
-          {rowSort.sorted.map((c) => (
+          {pagination.paginatedItems.map((c) => (
             <tr key={c.contribution_id} className="border-b last:border-0 hover:bg-muted/30">
               <td className="p-3 whitespace-nowrap">
                 <Link
@@ -106,6 +114,15 @@ export function ContributionTable({
           ))}
         </tbody>
       </table>
+    </div>
+    <TablePagination
+      page={pagination.page}
+      totalPages={pagination.totalPages}
+      totalItems={pagination.totalItems}
+      rangeStart={pagination.rangeStart}
+      rangeEnd={pagination.rangeEnd}
+      onPageChange={pagination.setPage}
+    />
     </div>
   );
 }

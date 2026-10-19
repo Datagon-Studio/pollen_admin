@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { formatDate } from "@/lib/format";
 import { useSortedRows } from "@/lib/table-sort";
 import { SortableTh } from "@/components/ui/sortable-th";
+import { TablePagination } from "@/components/ui/table-pagination";
+import { usePagination } from "@/hooks/usePagination";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { AuditLogEntry } from "@/services/admin.api";
 
@@ -64,12 +66,18 @@ export function AuditLogTable({
         return "";
     }
   });
+  const pagination = usePagination(
+    logSort.sorted,
+    undefined,
+    namedLogs.map((log) => log.audit_id).join(",")
+  );
 
   if (namedLogs.length === 0) {
     return <p className="text-sm text-muted-foreground py-4">{emptyMessage}</p>;
   }
 
   return (
+    <div className="space-y-3">
     <div className="border rounded-lg overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="bg-muted/50 border-b">
@@ -85,7 +93,7 @@ export function AuditLogTable({
           </tr>
         </thead>
         <tbody>
-          {logSort.sorted.map((log) => (
+          {pagination.paginatedItems.map((log) => (
             <tr key={log.audit_id} className="border-b last:border-0 hover:bg-muted/30 align-top">
               <td className="p-3 whitespace-nowrap text-muted-foreground">
                 {formatDate(log.created_at)}
@@ -138,6 +146,15 @@ export function AuditLogTable({
           ))}
         </tbody>
       </table>
+    </div>
+    <TablePagination
+      page={pagination.page}
+      totalPages={pagination.totalPages}
+      totalItems={pagination.totalItems}
+      rangeStart={pagination.rangeStart}
+      rangeEnd={pagination.rangeEnd}
+      onPageChange={pagination.setPage}
+    />
     </div>
   );
 }

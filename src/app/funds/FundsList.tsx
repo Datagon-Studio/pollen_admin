@@ -10,6 +10,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { adminApi, type AdminFundSummary } from "@/services/admin.api";
+import { TablePagination } from "@/components/ui/table-pagination";
+import { usePagination } from "@/hooks/usePagination";
 import { formatCurrency, formatDate } from "@/lib/format";
 
 const SELECT_CLASS =
@@ -83,6 +85,11 @@ export default function FundsList() {
         return "";
     }
   });
+  const pagination = usePagination(
+    fundSort.sorted,
+    undefined,
+    `${search}|${accountFilter}|${collectedFilter}|${goalFilter}|${activeFilter}|${visibilityFilter}`
+  );
 
   const hasActiveFilters =
     search.trim() !== "" ||
@@ -226,7 +233,7 @@ export default function FundsList() {
                     </td>
                   </tr>
                 ) : (
-                  fundSort.sorted.map((f) => (
+                  pagination.paginatedItems.map((f) => (
                     <tr
                       key={f.fund_id}
                       className="border-b last:border-0 hover:bg-muted/30"
@@ -265,6 +272,14 @@ export default function FundsList() {
               </tbody>
             </table>
           </div>
+          <TablePagination
+            page={pagination.page}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalItems}
+            rangeStart={pagination.rangeStart}
+            rangeEnd={pagination.rangeEnd}
+            onPageChange={pagination.setPage}
+          />
         </>
       )}
     </SectionPage>
