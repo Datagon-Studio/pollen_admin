@@ -1,9 +1,9 @@
 import { supabase } from "@/lib/supabase";
 
-const API_BASE_URL =
-  import.meta.env.DEV && import.meta.env.VITE_API_URL
-    ? import.meta.env.VITE_API_URL
-    : "/api/v1";
+// Local dev leaves this unset so Vite proxies /api to the backend.
+// The admin site is a separate Vercel project, so production must set
+// VITE_API_URL to the shared API, for example https://app.pollean.com/api/v1.
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api/v1";
 
 export interface ApiResponse<T = unknown> {
   success: boolean;
