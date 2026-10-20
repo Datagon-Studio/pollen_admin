@@ -28,7 +28,7 @@ export function ProfileLoadError({ message }: { message: string }) {
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">{message}</p>
           <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">
-            <li>Production calls <code className="text-xs">https://app.pollean.com/api/v1</code>. A relative <code className="text-xs">/api</code> on this host returns this page.</li>
+            <li>Preview must set <code className="text-xs">VITE_API_URL</code> to the development API. That API and this sign-in must use the same Supabase project.</li>
             <li>In local dev, leave <code className="text-xs">VITE_API_URL</code> unset so Vite proxies <code className="text-xs">/api</code> to port 3001.</li>
             <li>Confirm <code className="text-xs">users.role = superadmin</code> in Supabase (group admin is <code className="text-xs">admin</code>, not staff).</li>
           </ul>
