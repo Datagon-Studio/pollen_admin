@@ -1,9 +1,22 @@
 import { supabase } from "@/lib/supabase";
 
 // Local dev leaves this unset so Vite proxies /api to the backend.
-// The admin site is a separate Vercel project, so production must set
-// VITE_API_URL to the shared API, for example https://app.pollean.com/api/v1.
-const API_BASE_URL = import.meta.env.VITE_API_URL || "/api/v1";
+// Production builds call the group app's API. VITE_API_URL overrides that
+// (https only — an http URL is blocked from the HTTPS admin site).
+const PRODUCTION_API_BASE_URL = "https://app.pollean.com/api/v1";
+
+function resolveApiBaseUrl(): string {
+  const configured = import.meta.env.VITE_API_URL?.trim();
+  if (!configured) {
+    return import.meta.env.PROD ? PRODUCTION_API_BASE_URL : "/api/v1";
+  }
+  return configured.replace(
+    /^http:\/\/((?:app\.)?pollean\.com)/,
+    "https://$1"
+  );
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 export interface ApiResponse<T = unknown> {
   success: boolean;
