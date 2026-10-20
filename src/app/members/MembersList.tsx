@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Search } from "lucide-react";
+import { useSortedRows } from "@/lib/table-sort";
+import { SortableTh } from "@/components/ui/sortable-th";
 import { useMemo, useState } from "react";
 import { SectionPage } from "@/components/pages/SectionPage";
 import { Button } from "@/components/ui/button";
@@ -8,6 +10,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { adminApi, type AdminMemberSummary } from "@/services/admin.api";
+import { TablePagination } from "@/components/ui/table-pagination";
+import { usePagination } from "@/hooks/usePagination";
 import { formatCurrency, formatDate } from "@/lib/format";
 
 const SELECT_CLASS =
@@ -47,6 +51,32 @@ export default function MembersList() {
         verifiedFilter,
       })),
     [members, search, accountFilter, groupsFilter, contribFilter, verifiedFilter]
+  );
+
+  const memberSort = useSortedRows(filtered, (member, column) => {
+    switch (column) {
+      case "name":
+        return member.full_name;
+      case "contact":
+        return member.email ? `${member.phone} ${member.email}` : member.phone;
+      case "account":
+        return member.account_name || "Unnamed";
+      case "also":
+        return member.also_in_count;
+      case "status":
+        return member.is_active ? "Active" : "Inactive";
+      case "contributions":
+        return member.contribution_total;
+      case "joined":
+        return member.created_at;
+      default:
+        return "";
+    }
+  });
+  const pagination = usePagination(
+    memberSort.sorted,
+    undefined,
+    `${search}|${accountFilter}|${groupsFilter}|${contribFilter}|${verifiedFilter}`
   );
 
   const hasActiveFilters =
@@ -114,9 +144,9 @@ export default function MembersList() {
             <option value="all">All contributions</option>
             <option value="none">No contributions</option>
             <option value="has">Has contributions</option>
-            <option value="under1k">Under GH₵1,000</option>
-            <option value="1k-10k">GH₵1,000–10,000</option>
-            <option value="10kplus">Over GH₵10,000</option>
+            <option value="under1k">Under GHS 1,000</option>
+            <option value="1k-10k">GHS 1,000–10,000</option>
+            <option value="10kplus">Over GHS 10,000</option>
           </select>
           <select
             aria-label="Filter by verification"
@@ -159,13 +189,13 @@ export default function MembersList() {
             <table className="w-full text-sm">
               <thead className="bg-muted/50 border-b">
                 <tr>
-                  <th className="text-left p-3 font-medium">Name</th>
-                  <th className="text-left p-3 font-medium">Contact</th>
-                  <th className="text-left p-3 font-medium">Account</th>
-                  <th className="text-left p-3 font-medium">Also in</th>
-                  <th className="text-left p-3 font-medium">Status</th>
-                  <th className="text-right p-3 font-medium">Contributions</th>
-                  <th className="text-left p-3 font-medium">Joined</th>
+                  <SortableTh label="Name" column="name" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
+                  <SortableTh label="Contact" column="contact" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
+                  <SortableTh label="Account" column="account" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
+                  <SortableTh label="Also in" column="also" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
+                  <SortableTh label="Status" column="status" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
+                  <SortableTh label="Contributions" column="contributions" align="right" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
+                  <SortableTh label="Joined" column="joined" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
                 </tr>
               </thead>
               <tbody>
@@ -178,7 +208,7 @@ export default function MembersList() {
                     </td>
                   </tr>
                 ) : (
-                  filtered.map((m) => (
+                  pagination.paginatedItems.map((m) => (
                     <tr
                       key={m.member_id}
                       className="border-b last:border-0 hover:bg-muted/30"
@@ -224,6 +254,14 @@ export default function MembersList() {
               </tbody>
             </table>
           </div>
+          <TablePagination
+            page={pagination.page}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalItems}
+            rangeStart={pagination.rangeStart}
+            rangeEnd={pagination.rangeEnd}
+            onPageChange={pagination.setPage}
+          />
         </>
       )}
     </SectionPage>

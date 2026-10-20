@@ -1,6 +1,10 @@
 import { Link } from "react-router-dom";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { useSortedRows } from "@/lib/table-sort";
+import { SortableTh } from "@/components/ui/sortable-th";
+import { TablePagination } from "@/components/ui/table-pagination";
+import { usePagination } from "@/hooks/usePagination";
 import type { AdminContributionRow } from "@/services/admin.api";
 
 type ContributionTableProps = {
@@ -14,26 +18,55 @@ export function ContributionTable({
   showAccount = false,
   emptyMessage = "No contributions",
 }: ContributionTableProps) {
+  const rowSort = useSortedRows(rows, (row, column) => {
+    switch (column) {
+      case "date":
+        return row.date_received;
+      case "account":
+        return row.account_name || "Unnamed";
+      case "member":
+        return row.member_name || "Anonymous";
+      case "fund":
+        return row.fund_name || "Fund";
+      case "amount":
+        return row.amount;
+      case "channel":
+        return row.channel === "online" ? "Online" : "Manual";
+      case "status":
+        return row.status;
+      default:
+        return "";
+    }
+  });
+  const pagination = usePagination(
+    rowSort.sorted,
+    undefined,
+    rows.map((row) => row.contribution_id).join(",")
+  );
+
   if (rows.length === 0) {
     return <p className="text-sm text-muted-foreground py-4">{emptyMessage}</p>;
   }
 
   return (
+    <div className="space-y-3">
     <div className="border rounded-lg overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="bg-muted/50 border-b">
           <tr>
-            <th className="text-left p-3 font-medium">Date</th>
-            {showAccount && <th className="text-left p-3 font-medium">Account</th>}
-            <th className="text-left p-3 font-medium">Member</th>
-            <th className="text-left p-3 font-medium">Fund</th>
-            <th className="text-right p-3 font-medium">Amount</th>
-            <th className="text-left p-3 font-medium">Channel</th>
-            <th className="text-left p-3 font-medium">Status</th>
+            <SortableTh label="Date" column="date" sortColumn={rowSort.sortColumn} sortDirection={rowSort.sortDirection} onSort={rowSort.onSort} />
+            {showAccount && (
+              <SortableTh label="Account" column="account" sortColumn={rowSort.sortColumn} sortDirection={rowSort.sortDirection} onSort={rowSort.onSort} />
+            )}
+            <SortableTh label="Member" column="member" sortColumn={rowSort.sortColumn} sortDirection={rowSort.sortDirection} onSort={rowSort.onSort} />
+            <SortableTh label="Fund" column="fund" sortColumn={rowSort.sortColumn} sortDirection={rowSort.sortDirection} onSort={rowSort.onSort} />
+            <SortableTh label="Amount" column="amount" align="right" sortColumn={rowSort.sortColumn} sortDirection={rowSort.sortDirection} onSort={rowSort.onSort} />
+            <SortableTh label="Channel" column="channel" sortColumn={rowSort.sortColumn} sortDirection={rowSort.sortDirection} onSort={rowSort.onSort} />
+            <SortableTh label="Status" column="status" sortColumn={rowSort.sortColumn} sortDirection={rowSort.sortDirection} onSort={rowSort.onSort} />
           </tr>
         </thead>
         <tbody>
-          {rows.map((c) => (
+          {pagination.paginatedItems.map((c) => (
             <tr key={c.contribution_id} className="border-b last:border-0 hover:bg-muted/30">
               <td className="p-3 whitespace-nowrap">
                 <Link
@@ -81,6 +114,15 @@ export function ContributionTable({
           ))}
         </tbody>
       </table>
+    </div>
+    <TablePagination
+      page={pagination.page}
+      totalPages={pagination.totalPages}
+      totalItems={pagination.totalItems}
+      rangeStart={pagination.rangeStart}
+      rangeEnd={pagination.rangeEnd}
+      onPageChange={pagination.setPage}
+    />
     </div>
   );
 }

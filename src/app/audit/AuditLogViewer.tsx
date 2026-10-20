@@ -40,6 +40,14 @@ export default function AuditLogViewer() {
     queryFn: () => adminApi.listAccounts(),
   });
 
+  const accountNames = useMemo(() => {
+    const names = new Map<string, string | null>();
+    for (const account of accounts) {
+      names.set(account.account_id, account.account_name);
+    }
+    return names;
+  }, [accounts]);
+
   const actionOptions = useMemo(() => {
     const types = new Set<string>();
     for (const log of logs) {
@@ -58,9 +66,12 @@ export default function AuditLogViewer() {
           category,
           statusFilter,
           actionFilter,
+          accountName: log.account_id
+            ? accountNames.get(log.account_id) ?? ""
+            : "",
         })
       ),
-    [logs, search, accountFilter, category, statusFilter, actionFilter]
+    [logs, search, accountFilter, category, statusFilter, actionFilter, accountNames]
   );
 
   const hasActiveFilters =
@@ -177,6 +188,7 @@ export default function AuditLogViewer() {
           <AuditLogTable
             logs={filtered}
             showAccount={accountFilter === "all" || accountFilter === "platform"}
+            accountNames={accountNames}
             emptyMessage={
               hasActiveFilters ? "No audit events match your filters" : "No audit events"
             }
@@ -195,6 +207,7 @@ function matchesAuditFilters(
     category: string;
     statusFilter: string;
     actionFilter: string;
+    accountName: string;
   }
 ): boolean {
   const q = filters.search.trim().toLowerCase();
@@ -203,6 +216,7 @@ function matchesAuditFilters(
     const haystack = [
       log.action_type,
       log.action_category,
+      filters.accountName,
       log.account_id ?? "",
       log.entity_id ?? "",
       log.entity_type ?? "",

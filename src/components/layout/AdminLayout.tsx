@@ -5,6 +5,7 @@ import {
   Users,
   Wallet,
   HandCoins,
+  BarChart3,
   Landmark,
   ShieldCheck,
   Settings,
@@ -14,6 +15,7 @@ import {
   Moon,
   Sun,
   ScrollText,
+  UserRound,
 } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "next-themes";
@@ -39,10 +41,12 @@ const navItems: NavItem[] = [
   { label: "Members", href: "/members", icon: Users },
   { label: "Funds", href: "/funds", icon: Wallet },
   { label: "Contributions", href: "/contributions", icon: HandCoins },
+  { label: "Reports", href: "/reports", icon: BarChart3 },
   { label: "Audit log", href: "/audit", icon: ScrollText },
   { label: "Settlements", href: "/settlements", icon: Landmark, complianceOnly: true },
   { label: "KYC", href: "/kyc", icon: ShieldCheck, complianceOnly: true },
   { label: "Staff", href: "/settings/staff", icon: Settings, platformAdminOnly: true },
+  { label: "Profile", href: "/profile", icon: UserRound },
 ];
 
 const envLabel = import.meta.env.VITE_APP_ENV || import.meta.env.MODE;
@@ -107,7 +111,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           <NavLinks />
         </nav>
         <div className="p-4 border-t border-sidebar-border text-xs text-sidebar-foreground/60">
-          Platform-wide · GH₵ · Africa/Accra
+          Platform-wide · GHS · Africa/Accra
         </div>
       </aside>
 

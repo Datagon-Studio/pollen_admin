@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Search } from "lucide-react";
+import { useSortedRows } from "@/lib/table-sort";
+import { SortableTh } from "@/components/ui/sortable-th";
 import { useMemo, useState } from "react";
 import { SectionPage } from "@/components/pages/SectionPage";
 import { Button } from "@/components/ui/button";
@@ -8,6 +10,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { adminApi, type AdminFundSummary } from "@/services/admin.api";
+import { TablePagination } from "@/components/ui/table-pagination";
+import { usePagination } from "@/hooks/usePagination";
 import { formatCurrency, formatDate } from "@/lib/format";
 
 const SELECT_CLASS =
@@ -59,6 +63,32 @@ export default function FundsList() {
       activeFilter,
       visibilityFilter,
     ]
+  );
+
+  const fundSort = useSortedRows(filtered, (fund, column) => {
+    switch (column) {
+      case "fund":
+        return fund.fund_name;
+      case "account":
+        return fund.account_name || "Unnamed";
+      case "collected":
+        return fund.amount_collected;
+      case "goal":
+        return fund.fund_goal;
+      case "visibility":
+        return fund.is_public ? "Public" : "Private";
+      case "status":
+        return fund.is_active ? "Active" : "Inactive";
+      case "created":
+        return fund.created_at;
+      default:
+        return "";
+    }
+  });
+  const pagination = usePagination(
+    fundSort.sorted,
+    undefined,
+    `${search}|${accountFilter}|${collectedFilter}|${goalFilter}|${activeFilter}|${visibilityFilter}`
   );
 
   const hasActiveFilters =
@@ -117,9 +147,9 @@ export default function FundsList() {
             <option value="all">All collected</option>
             <option value="none">Nothing collected</option>
             <option value="has">Has collections</option>
-            <option value="under1k">Under GH₵1,000</option>
-            <option value="1k-10k">GH₵1,000–10,000</option>
-            <option value="10kplus">Over GH₵10,000</option>
+            <option value="under1k">Under GHS 1,000</option>
+            <option value="1k-10k">GHS 1,000–10,000</option>
+            <option value="10kplus">Over GHS 10,000</option>
           </select>
           <select
             aria-label="Filter by goal progress"
@@ -184,13 +214,13 @@ export default function FundsList() {
             <table className="w-full text-sm">
               <thead className="bg-muted/50 border-b">
                 <tr>
-                  <th className="text-left p-3 font-medium">Fund</th>
-                  <th className="text-left p-3 font-medium">Account</th>
-                  <th className="text-right p-3 font-medium">Collected</th>
-                  <th className="text-right p-3 font-medium">Goal</th>
-                  <th className="text-left p-3 font-medium">Visibility</th>
-                  <th className="text-left p-3 font-medium">Status</th>
-                  <th className="text-left p-3 font-medium">Created</th>
+                  <SortableTh label="Fund" column="fund" sortColumn={fundSort.sortColumn} sortDirection={fundSort.sortDirection} onSort={fundSort.onSort} />
+                  <SortableTh label="Account" column="account" sortColumn={fundSort.sortColumn} sortDirection={fundSort.sortDirection} onSort={fundSort.onSort} />
+                  <SortableTh label="Collected" column="collected" align="right" sortColumn={fundSort.sortColumn} sortDirection={fundSort.sortDirection} onSort={fundSort.onSort} />
+                  <SortableTh label="Goal" column="goal" align="right" sortColumn={fundSort.sortColumn} sortDirection={fundSort.sortDirection} onSort={fundSort.onSort} />
+                  <SortableTh label="Visibility" column="visibility" sortColumn={fundSort.sortColumn} sortDirection={fundSort.sortDirection} onSort={fundSort.onSort} />
+                  <SortableTh label="Status" column="status" sortColumn={fundSort.sortColumn} sortDirection={fundSort.sortDirection} onSort={fundSort.onSort} />
+                  <SortableTh label="Created" column="created" sortColumn={fundSort.sortColumn} sortDirection={fundSort.sortDirection} onSort={fundSort.onSort} />
                 </tr>
               </thead>
               <tbody>
@@ -203,7 +233,7 @@ export default function FundsList() {
                     </td>
                   </tr>
                 ) : (
-                  filtered.map((f) => (
+                  pagination.paginatedItems.map((f) => (
                     <tr
                       key={f.fund_id}
                       className="border-b last:border-0 hover:bg-muted/30"
@@ -242,6 +272,14 @@ export default function FundsList() {
               </tbody>
             </table>
           </div>
+          <TablePagination
+            page={pagination.page}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalItems}
+            rangeStart={pagination.rangeStart}
+            rangeEnd={pagination.rangeEnd}
+            onPageChange={pagination.setPage}
+          />
         </>
       )}
     </SectionPage>

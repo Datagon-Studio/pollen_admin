@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, Loader2, Search } from "lucide-react";
+import { useSortedRows } from "@/lib/table-sort";
+import { SortableTh } from "@/components/ui/sortable-th";
 import { useMemo, useState } from "react";
 import { SectionPage } from "@/components/pages/SectionPage";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,6 +13,8 @@ import {
   type AccountStaffMember,
   type AdminAccountSummary,
 } from "@/services/admin.api";
+import { TablePagination } from "@/components/ui/table-pagination";
+import { usePagination } from "@/hooks/usePagination";
 import { formatCurrency, formatDate } from "@/lib/format";
 
 const COLUMN_COUNT = 8;
@@ -38,6 +42,32 @@ export default function AccountsList() {
       );
     });
   }, [accounts, search, statusFilter, kycFilter]);
+
+  const accountSort = useSortedRows(filtered, (account, column) => {
+    switch (column) {
+      case "account":
+        return account.account_name || "Unnamed account";
+      case "status":
+        return account.status;
+      case "kyc":
+        return account.kyc_status;
+      case "members":
+        return account.member_count;
+      case "funds":
+        return account.fund_count;
+      case "collected":
+        return account.total_collected;
+      case "created":
+        return account.created_at;
+      default:
+        return "";
+    }
+  });
+  const pagination = usePagination(
+    accountSort.sorted,
+    undefined,
+    `${search}|${statusFilter}|${kycFilter}`
+  );
 
   return (
     <SectionPage
@@ -104,13 +134,13 @@ export default function AccountsList() {
                   <th className="w-8 p-3">
                     <span className="sr-only">Expand</span>
                   </th>
-                  <th className="text-left p-3 font-medium">Account</th>
-                  <th className="text-left p-3 font-medium">Status</th>
-                  <th className="text-left p-3 font-medium">KYC</th>
-                  <th className="text-right p-3 font-medium">Members</th>
-                  <th className="text-right p-3 font-medium">Funds</th>
-                  <th className="text-right p-3 font-medium">Collected</th>
-                  <th className="text-left p-3 font-medium">Created</th>
+                  <SortableTh label="Account" column="account" sortColumn={accountSort.sortColumn} sortDirection={accountSort.sortDirection} onSort={accountSort.onSort} />
+                  <SortableTh label="Status" column="status" sortColumn={accountSort.sortColumn} sortDirection={accountSort.sortDirection} onSort={accountSort.onSort} />
+                  <SortableTh label="KYC" column="kyc" sortColumn={accountSort.sortColumn} sortDirection={accountSort.sortDirection} onSort={accountSort.onSort} />
+                  <SortableTh label="Members" column="members" align="right" sortColumn={accountSort.sortColumn} sortDirection={accountSort.sortDirection} onSort={accountSort.onSort} />
+                  <SortableTh label="Funds" column="funds" align="right" sortColumn={accountSort.sortColumn} sortDirection={accountSort.sortDirection} onSort={accountSort.onSort} />
+                  <SortableTh label="Collected" column="collected" align="right" sortColumn={accountSort.sortColumn} sortDirection={accountSort.sortDirection} onSort={accountSort.onSort} />
+                  <SortableTh label="Created" column="created" sortColumn={accountSort.sortColumn} sortDirection={accountSort.sortDirection} onSort={accountSort.onSort} />
                 </tr>
               </thead>
               <tbody>
@@ -124,7 +154,7 @@ export default function AccountsList() {
                     </td>
                   </tr>
                 ) : (
-                  filtered.map((a) => {
+                  pagination.paginatedItems.map((a) => {
                     const isExpanded = expandedId === a.account_id;
                     return (
                       <AccountRow
@@ -141,6 +171,14 @@ export default function AccountsList() {
               </tbody>
             </table>
           </div>
+          <TablePagination
+            page={pagination.page}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalItems}
+            rangeStart={pagination.rangeStart}
+            rangeEnd={pagination.rangeEnd}
+            onPageChange={pagination.setPage}
+          />
         </>
       )}
     </SectionPage>

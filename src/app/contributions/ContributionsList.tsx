@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Search } from "lucide-react";
+import { useSortedRows } from "@/lib/table-sort";
+import { SortableTh } from "@/components/ui/sortable-th";
 import { useMemo, useState } from "react";
 import { SectionPage } from "@/components/pages/SectionPage";
 import { Button } from "@/components/ui/button";
@@ -8,6 +10,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { adminApi, type AdminContributionRow } from "@/services/admin.api";
+import { TablePagination } from "@/components/ui/table-pagination";
+import { usePagination } from "@/hooks/usePagination";
 import { formatCurrency, formatDate } from "@/lib/format";
 
 const SELECT_CLASS =
@@ -78,6 +82,34 @@ export default function ContributionsList() {
       statusFilter,
       dateFilter,
     ]
+  );
+
+  const contributionSort = useSortedRows(filtered, (row, column) => {
+    switch (column) {
+      case "date":
+        return row.date_received;
+      case "member":
+        return row.member_name || "Anonymous";
+      case "account":
+        return row.account_name || "Unnamed";
+      case "fund":
+        return row.fund_name || "Fund";
+      case "amount":
+        return row.amount;
+      case "channel":
+        return row.channel === "online" ? "Online" : "Manual";
+      case "status":
+        return row.status;
+      case "reference":
+        return row.payment_reference || "";
+      default:
+        return "";
+    }
+  });
+  const pagination = usePagination(
+    contributionSort.sorted,
+    undefined,
+    `${search}|${accountFilter}|${fundFilter}|${amountFilter}|${memberFilter}|${channelFilter}|${statusFilter}|${dateFilter}`
   );
 
   const hasActiveFilters =
@@ -154,10 +186,10 @@ export default function ContributionsList() {
             onChange={(e) => setAmountFilter(e.target.value)}
           >
             <option value="all">All amounts</option>
-            <option value="under100">Under GH₵100</option>
-            <option value="100-1k">GH₵100–1,000</option>
-            <option value="1k-10k">GH₵1,000–10,000</option>
-            <option value="10kplus">Over GH₵10,000</option>
+            <option value="under100">Under GHS 100</option>
+            <option value="100-1k">GHS 100–1,000</option>
+            <option value="1k-10k">GHS 1,000–10,000</option>
+            <option value="10kplus">Over GHS 10,000</option>
           </select>
           <select
             aria-label="Filter by member"
@@ -233,14 +265,14 @@ export default function ContributionsList() {
             <table className="w-full text-sm">
               <thead className="bg-muted/50 border-b">
                 <tr>
-                  <th className="text-left p-3 font-medium">Date</th>
-                  <th className="text-left p-3 font-medium">Member</th>
-                  <th className="text-left p-3 font-medium">Account</th>
-                  <th className="text-left p-3 font-medium">Fund</th>
-                  <th className="text-right p-3 font-medium">Amount</th>
-                  <th className="text-left p-3 font-medium">Channel</th>
-                  <th className="text-left p-3 font-medium">Status</th>
-                  <th className="text-left p-3 font-medium">Reference</th>
+                  <SortableTh label="Date" column="date" sortColumn={contributionSort.sortColumn} sortDirection={contributionSort.sortDirection} onSort={contributionSort.onSort} />
+                  <SortableTh label="Member" column="member" sortColumn={contributionSort.sortColumn} sortDirection={contributionSort.sortDirection} onSort={contributionSort.onSort} />
+                  <SortableTh label="Account" column="account" sortColumn={contributionSort.sortColumn} sortDirection={contributionSort.sortDirection} onSort={contributionSort.onSort} />
+                  <SortableTh label="Fund" column="fund" sortColumn={contributionSort.sortColumn} sortDirection={contributionSort.sortDirection} onSort={contributionSort.onSort} />
+                  <SortableTh label="Amount" column="amount" align="right" sortColumn={contributionSort.sortColumn} sortDirection={contributionSort.sortDirection} onSort={contributionSort.onSort} />
+                  <SortableTh label="Channel" column="channel" sortColumn={contributionSort.sortColumn} sortDirection={contributionSort.sortDirection} onSort={contributionSort.onSort} />
+                  <SortableTh label="Status" column="status" sortColumn={contributionSort.sortColumn} sortDirection={contributionSort.sortDirection} onSort={contributionSort.onSort} />
+                  <SortableTh label="Reference" column="reference" sortColumn={contributionSort.sortColumn} sortDirection={contributionSort.sortDirection} onSort={contributionSort.onSort} />
                 </tr>
               </thead>
               <tbody>
@@ -253,7 +285,7 @@ export default function ContributionsList() {
                     </td>
                   </tr>
                 ) : (
-                  filtered.map((c) => (
+                  pagination.paginatedItems.map((c) => (
                     <tr
                       key={c.contribution_id}
                       className="border-b last:border-0 hover:bg-muted/30"
@@ -317,6 +349,14 @@ export default function ContributionsList() {
               </tbody>
             </table>
           </div>
+          <TablePagination
+            page={pagination.page}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalItems}
+            rangeStart={pagination.rangeStart}
+            rangeEnd={pagination.rangeEnd}
+            onPageChange={pagination.setPage}
+          />
         </>
       )}
     </SectionPage>

@@ -11,9 +11,14 @@ import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ContributionTable } from "@/components/catalog/ContributionTable";
 import { AuditLogTable } from "@/components/audit/AuditLogTable";
+import { SettlementRequestTable } from "@/components/settlements/SettlementRequestTable";
 import { adminApi } from "@/services/admin.api";
+import { useSortedRows } from "@/lib/table-sort";
+import { SortableTh } from "@/components/ui/sortable-th";
 import { kycApi } from "@/services/kyc.api";
 import { useStaffRole } from "@/hooks/useStaffRole";
+import { TablePagination } from "@/components/ui/table-pagination";
+import { usePagination } from "@/hooks/usePagination";
 import { formatCurrency, formatDate } from "@/lib/format";
 
 const TAB_IDS = [
@@ -22,6 +27,7 @@ const TAB_IDS = [
   "funds",
   "team",
   "contributions",
+  "settlements",
   "kyc",
   "audit",
 ] as const;
@@ -34,6 +40,7 @@ const tabs: TabItem[] = [
   { id: "funds", label: "Funds" },
   { id: "team", label: "Manager & officers" },
   { id: "contributions", label: "Contributions" },
+  { id: "settlements", label: "Settlements" },
   { id: "kyc", label: "KYC" },
   { id: "audit", label: "Audit" },
 ];
@@ -75,6 +82,46 @@ export default function AccountDetail() {
     enabled: !!id && activeTab === "funds",
   });
 
+  const memberSort = useSortedRows(members, (member, column) => {
+    switch (column) {
+      case "name":
+        return member.full_name;
+      case "phone":
+        return member.phone;
+      case "status":
+        return member.is_active ? "Active" : "Inactive";
+      case "contributions":
+        return member.contribution_total;
+      default:
+        return "";
+    }
+  });
+
+  const fundSort = useSortedRows(funds, (fund, column) => {
+    switch (column) {
+      case "fund":
+        return fund.fund_name;
+      case "collected":
+        return fund.amount_collected;
+      case "goal":
+        return fund.fund_goal;
+      case "status":
+        return fund.is_active ? "Active" : "Inactive";
+      default:
+        return "";
+    }
+  });
+  const memberPage = usePagination(
+    memberSort.sorted,
+    undefined,
+    members.map((member) => member.member_id).join(",")
+  );
+  const fundPage = usePagination(
+    fundSort.sorted,
+    undefined,
+    funds.map((fund) => fund.fund_id).join(",")
+  );
+
   const { data: contributions = [], isLoading: contribLoading } = useQuery({
     queryKey: ["admin-contributions", id],
     queryFn: () => adminApi.listContributions({ accountId: id! }),
@@ -91,6 +138,12 @@ export default function AccountDetail() {
     queryKey: ["admin-account-kyc", id],
     queryFn: () => adminApi.getAccountKyc(id!),
     enabled: !!id && activeTab === "kyc",
+  });
+
+  const { data: settlementRequests = [], isLoading: settlementsLoading } = useQuery({
+    queryKey: ["settlement-requests", "account", id],
+    queryFn: () => adminApi.listSettlementRequests({ accountId: id! }),
+    enabled: !!id && activeTab === "settlements",
   });
 
   const { data: auditLogs = [], isLoading: auditLoading } = useQuery({
@@ -268,18 +321,19 @@ export default function AccountDetail() {
 
         {activeTab === "members" && (
           <TabPanel loading={membersLoading} empty={members.length === 0} emptyLabel="No members">
+            <div className="space-y-3">
             <div className="border rounded-lg overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 border-b">
                   <tr>
-                    <th className="text-left p-3 font-medium">Name</th>
-                    <th className="text-left p-3 font-medium">Phone</th>
-                    <th className="text-left p-3 font-medium">Status</th>
-                    <th className="text-right p-3 font-medium">Contributions</th>
+                    <SortableTh label="Name" column="name" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
+                    <SortableTh label="Phone" column="phone" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
+                    <SortableTh label="Status" column="status" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
+                    <SortableTh label="Contributions" column="contributions" align="right" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
                   </tr>
                 </thead>
                 <tbody>
-                  {members.map((m) => (
+                  {memberPage.paginatedItems.map((m) => (
                     <tr key={m.member_id} className="border-b last:border-0 hover:bg-muted/30">
                       <td className="p-3">
                         <Link to={`/members/${m.member_id}`} className="font-medium hover:underline">
@@ -298,23 +352,33 @@ export default function AccountDetail() {
                 </tbody>
               </table>
             </div>
+            <TablePagination
+              page={memberPage.page}
+              totalPages={memberPage.totalPages}
+              totalItems={memberPage.totalItems}
+              rangeStart={memberPage.rangeStart}
+              rangeEnd={memberPage.rangeEnd}
+              onPageChange={memberPage.setPage}
+            />
+            </div>
           </TabPanel>
         )}
 
         {activeTab === "funds" && (
           <TabPanel loading={fundsLoading} empty={funds.length === 0} emptyLabel="No funds">
+            <div className="space-y-3">
             <div className="border rounded-lg overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 border-b">
                   <tr>
-                    <th className="text-left p-3 font-medium">Fund</th>
-                    <th className="text-right p-3 font-medium">Collected</th>
-                    <th className="text-right p-3 font-medium">Goal</th>
-                    <th className="text-left p-3 font-medium">Status</th>
+                    <SortableTh label="Fund" column="fund" sortColumn={fundSort.sortColumn} sortDirection={fundSort.sortDirection} onSort={fundSort.onSort} />
+                    <SortableTh label="Collected" column="collected" align="right" sortColumn={fundSort.sortColumn} sortDirection={fundSort.sortDirection} onSort={fundSort.onSort} />
+                    <SortableTh label="Goal" column="goal" align="right" sortColumn={fundSort.sortColumn} sortDirection={fundSort.sortDirection} onSort={fundSort.onSort} />
+                    <SortableTh label="Status" column="status" sortColumn={fundSort.sortColumn} sortDirection={fundSort.sortDirection} onSort={fundSort.onSort} />
                   </tr>
                 </thead>
                 <tbody>
-                  {funds.map((f) => (
+                  {fundPage.paginatedItems.map((f) => (
                     <tr key={f.fund_id} className="border-b last:border-0 hover:bg-muted/30">
                       <td className="p-3">
                         <Link to={`/funds/${f.fund_id}`} className="font-medium hover:underline">
@@ -334,6 +398,15 @@ export default function AccountDetail() {
                   ))}
                 </tbody>
               </table>
+            </div>
+            <TablePagination
+              page={fundPage.page}
+              totalPages={fundPage.totalPages}
+              totalItems={fundPage.totalItems}
+              rangeStart={fundPage.rangeStart}
+              rangeEnd={fundPage.rangeEnd}
+              onPageChange={fundPage.setPage}
+            />
             </div>
           </TabPanel>
         )}
@@ -424,6 +497,16 @@ export default function AccountDetail() {
                 )}
               </CardContent>
             </Card>
+          </TabPanel>
+        )}
+
+        {activeTab === "settlements" && (
+          <TabPanel
+            loading={settlementsLoading}
+            empty={settlementRequests.length === 0}
+            emptyLabel="No settlement requests for this account"
+          >
+            <SettlementRequestTable requests={settlementRequests} hideAccount />
           </TabPanel>
         )}
 

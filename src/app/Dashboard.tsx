@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { SectionPage } from "@/components/pages/SectionPage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendLineChart } from "@/components/charts/TrendLineChart";
+import { SettlementRequestTable } from "@/components/settlements/SettlementRequestTable";
 import { adminApi } from "@/services/admin.api";
 import { formatCurrency } from "@/lib/format";
 
@@ -11,6 +12,14 @@ export default function Dashboard() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-dashboard"],
     queryFn: () => adminApi.getDashboard(),
+  });
+  const {
+    data: pendingSettlements = [],
+    isLoading: settlementsLoading,
+    error: settlementsError,
+  } = useQuery({
+    queryKey: ["settlement-requests", "pending"],
+    queryFn: () => adminApi.listSettlementRequests({ status: "pending" }),
   });
 
   if (isLoading) {
@@ -64,7 +73,45 @@ export default function Dashboard() {
             )
           }
         />
+        <MetricCard
+          label="Pending settlements"
+          value={
+            settlementsLoading ? (
+              "…"
+            ) : pendingSettlements.length > 0 ? (
+              <Link to="/settlements" className="text-primary hover:underline">
+                {pendingSettlements.length}
+              </Link>
+            ) : (
+              "0"
+            )
+          }
+        />
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Pending settlement requests</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {settlementsLoading && (
+            <p className="text-sm text-muted-foreground">Loading requests…</p>
+          )}
+          {settlementsError && (
+            <p className="text-sm text-destructive">
+              {settlementsError instanceof Error
+                ? settlementsError.message
+                : "Failed to load settlement requests"}
+            </p>
+          )}
+          {!settlementsLoading && !settlementsError && pendingSettlements.length === 0 && (
+            <p className="text-sm text-muted-foreground">No pending settlement requests.</p>
+          )}
+          {pendingSettlements.length > 0 && (
+            <SettlementRequestTable requests={pendingSettlements} />
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

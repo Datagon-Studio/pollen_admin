@@ -20,7 +20,9 @@ import SettlementDetail from "@/app/settlements/SettlementDetail";
 import KycQueue from "@/app/kyc/KycQueue";
 import KycDetail from "@/app/kyc/KycDetail";
 import StaffManagement from "@/app/settings/StaffManagement";
+import ReportsPage from "@/app/reports/ReportsPage";
 import AuditLogViewer from "@/app/audit/AuditLogViewer";
+import ProfilePage from "@/app/profile/ProfilePage";
 
 const queryClient = new QueryClient();
 
@@ -114,6 +116,14 @@ export default function App() {
             }
           />
           <Route
+            path="/reports"
+            element={
+              <StaffShell>
+                <ReportsPage />
+              </StaffShell>
+            }
+          />
+          <Route
             path="/audit"
             element={
               <StaffShell>
@@ -169,6 +179,15 @@ export default function App() {
                   <StaffManagement />
                 </AdminLayout>
               </StaffRoute>
+            }
+          />
+
+          <Route
+            path="/profile"
+            element={
+              <StaffShell>
+                <ProfilePage />
+              </StaffShell>
             }
           />
 

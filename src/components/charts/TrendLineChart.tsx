@@ -3,6 +3,7 @@ import { formatCurrency, formatMonthKey } from "@/lib/format";
 
 export interface TrendPoint {
   month: string;
+  label?: string;
   online: number;
   manual: number;
   total: number;
@@ -39,7 +40,17 @@ function polyline(xs: number[], ys: number[]): string {
   return xs.map((x, i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(" ");
 }
 
-export function TrendLineChart({ data }: { data: TrendPoint[] }) {
+function pointLabel(point: TrendPoint): string {
+  return point.label || formatMonthKey(point.month);
+}
+
+export function TrendLineChart({
+  data,
+  title = "12-month collection trend",
+}: {
+  data: TrendPoint[];
+  title?: string;
+}) {
   const labelId = useId();
   const descId = useId();
   const [active, setActive] = useState<number | null>(null);
@@ -110,7 +121,7 @@ export function TrendLineChart({ data }: { data: TrendPoint[] }) {
           }
         }}
       >
-        <title id={labelId}>12-month collection trend</title>
+        <title id={labelId}>{title}</title>
         <desc id={descId}>
           Line chart of total, online, and manual collections by month. Use left
           and right arrows to inspect each month.
@@ -204,14 +215,16 @@ export function TrendLineChart({ data }: { data: TrendPoint[] }) {
                 className="fill-muted-foreground stroke-background"
                 strokeWidth={1}
               />
-              <text
-                x={chart.xs[i]}
-                y={VIEW_H - 10}
-                textAnchor="middle"
-                className="fill-muted-foreground text-[10px]"
-              >
-                {formatMonthKey(d.month)}
-              </text>
+              {data.length <= 12 || i % Math.ceil(data.length / 8) === 0 || i === data.length - 1 ? (
+                <text
+                  x={chart.xs[i]}
+                  y={VIEW_H - 10}
+                  textAnchor="middle"
+                  className="fill-muted-foreground text-[10px]"
+                >
+                  {pointLabel(d)}
+                </text>
+              ) : null}
             </g>
           );
         })}
@@ -224,7 +237,7 @@ export function TrendLineChart({ data }: { data: TrendPoint[] }) {
             left: `clamp(0.5rem, calc(${tooltipLeft}% - 5.5rem), calc(100% - 11.5rem))`,
           }}
         >
-          <p className="font-medium mb-1.5">{formatMonthKey(point.month)}</p>
+          <p className="font-medium mb-1.5">{pointLabel(point)}</p>
           <dl className="space-y-1">
             <div className="flex justify-between gap-3">
               <dt className="text-muted-foreground">Total</dt>
@@ -255,7 +268,7 @@ export function TrendLineChart({ data }: { data: TrendPoint[] }) {
         <tbody>
           {data.map((d) => (
             <tr key={d.month}>
-              <td>{formatMonthKey(d.month)}</td>
+              <td>{pointLabel(d)}</td>
               <td>{formatCurrency(d.total)}</td>
               <td>{formatCurrency(d.online)}</td>
               <td>{formatCurrency(d.manual)}</td>
