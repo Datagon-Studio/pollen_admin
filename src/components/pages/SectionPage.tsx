@@ -5,6 +5,9 @@ type SectionPageProps = {
   title: string;
   description: string;
   phase?: "mvp" | "api" | "ready";
+  /** Replaces the phase badge. Pass null to hide it. */
+  badge?: React.ReactNode | null;
+  actions?: React.ReactNode;
   children?: React.ReactNode;
 };
 
@@ -14,7 +17,17 @@ const phaseLabels = {
   ready: "In progress",
 } as const;
 
-export function SectionPage({ title, description, phase = "mvp", children }: SectionPageProps) {
+export function SectionPage({
+  title,
+  description,
+  phase = "mvp",
+  badge,
+  actions,
+  children,
+}: SectionPageProps) {
+  const badgeNode =
+    badge === null ? null : (badge ?? <Badge variant="secondary">{phaseLabels[phase]}</Badge>);
+
   return (
     <div className="space-y-6 max-w-6xl">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -22,7 +35,12 @@ export function SectionPage({ title, description, phase = "mvp", children }: Sec
           <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
           <p className="text-muted-foreground mt-1 max-w-2xl">{description}</p>
         </div>
-        <Badge variant="secondary">{phaseLabels[phase]}</Badge>
+        {(badgeNode || actions) && (
+          <div className="flex flex-wrap items-center gap-2">
+            {badgeNode}
+            {actions}
+          </div>
+        )}
       </div>
       {children ?? (
         <Card>
