@@ -6,17 +6,20 @@ import { SortableTh } from "@/components/ui/sortable-th";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { usePagination } from "@/hooks/usePagination";
 import type { AdminContributionRow } from "@/services/admin.api";
+import { EmptyState, type IllustrationName } from "@/components/ui/empty-state";
 
 type ContributionTableProps = {
   rows: AdminContributionRow[];
   showAccount?: boolean;
   emptyMessage?: string;
+  emptyIllustration?: IllustrationName;
 };
 
 export function ContributionTable({
   rows,
   showAccount = false,
   emptyMessage = "No contributions",
+  emptyIllustration = "empty-mailbox",
 }: ContributionTableProps) {
   const rowSort = useSortedRows(rows, (row, column) => {
     switch (column) {
@@ -45,7 +48,13 @@ export function ContributionTable({
   );
 
   if (rows.length === 0) {
-    return <p className="text-sm text-muted-foreground py-4">{emptyMessage}</p>;
+    return (
+      <EmptyState
+        illustration={emptyIllustration}
+        size="table"
+        description={emptyMessage}
+      />
+    );
   }
 
   return (

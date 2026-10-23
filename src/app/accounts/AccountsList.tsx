@@ -16,6 +16,7 @@ import {
 import { TablePagination } from "@/components/ui/table-pagination";
 import { usePagination } from "@/hooks/usePagination";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const COLUMN_COUNT = 8;
 
@@ -146,11 +147,19 @@ export default function AccountsList() {
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan={COLUMN_COUNT}
-                      className="p-8 text-center text-muted-foreground"
-                    >
-                      No accounts match your filters
+                    <td colSpan={COLUMN_COUNT} className="p-6">
+                      <EmptyState
+                        illustration={
+                          accounts.length === 0 &&
+                          !search.trim() &&
+                          statusFilter === "all" &&
+                          kycFilter === "all"
+                            ? "empty-mailbox"
+                            : "file-searching"
+                        }
+                        size="table"
+                        description="No accounts match your filters"
+                      />
                     </td>
                   </tr>
                 ) : (

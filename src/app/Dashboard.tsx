@@ -7,6 +7,7 @@ import { TrendLineChart } from "@/components/charts/TrendLineChart";
 import { SettlementRequestTable } from "@/components/settlements/SettlementRequestTable";
 import { adminApi } from "@/services/admin.api";
 import { formatCurrency } from "@/lib/format";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function Dashboard() {
   const { data, isLoading, error } = useQuery({
@@ -105,7 +106,11 @@ export default function Dashboard() {
             </p>
           )}
           {!settlementsLoading && !settlementsError && pendingSettlements.length === 0 && (
-            <p className="text-sm text-muted-foreground">No pending settlement requests.</p>
+            <EmptyState
+              illustration="signed-document"
+              size="table"
+              description="No pending settlement requests."
+            />
           )}
           {pendingSettlements.length > 0 && (
             <SettlementRequestTable requests={pendingSettlements} />

@@ -13,6 +13,7 @@ import { adminApi, type AdminFundSummary } from "@/services/admin.api";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { usePagination } from "@/hooks/usePagination";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const SELECT_CLASS =
   "h-10 rounded-md border border-input bg-background px-3 text-sm min-w-[10.5rem]";
@@ -226,10 +227,16 @@ export default function FundsList() {
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-muted-foreground">
-                      {hasActiveFilters
-                        ? "No funds match your filters"
-                        : "No funds found"}
+                    <td colSpan={7} className="p-6">
+                      <EmptyState
+                        illustration={hasActiveFilters ? "file-searching" : "growth-chart"}
+                        size="table"
+                        description={
+                          hasActiveFilters
+                            ? "No funds match your filters"
+                            : "No funds found"
+                        }
+                      />
                     </td>
                   </tr>
                 ) : (

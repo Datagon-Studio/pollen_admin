@@ -20,6 +20,7 @@ import { useStaffRole } from "@/hooks/useStaffRole";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { usePagination } from "@/hooks/usePagination";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { EmptyState, type IllustrationName } from "@/components/ui/empty-state";
 
 const TAB_IDS = [
   "overview",
@@ -200,8 +201,11 @@ export default function AccountDetail() {
           <Link to="/accounts">← All accounts</Link>
         </Button>
         <Card className="mt-4">
-          <CardContent className="pt-6 text-sm text-destructive">
-            {error instanceof Error ? error.message : "Account not found"}
+          <CardContent className="pt-6">
+            <EmptyState
+              illustration="files-missing"
+              description={error instanceof Error ? error.message : "Account not found"}
+            />
           </CardContent>
         </Card>
       </SectionPage>
@@ -320,7 +324,12 @@ export default function AccountDetail() {
         )}
 
         {activeTab === "members" && (
-          <TabPanel loading={membersLoading} empty={members.length === 0} emptyLabel="No members">
+          <TabPanel
+            loading={membersLoading}
+            empty={members.length === 0}
+            emptyLabel="No members"
+            illustration="collaboration"
+          >
             <div className="space-y-3">
             <div className="border rounded-lg overflow-x-auto">
               <table className="w-full text-sm">
@@ -365,7 +374,12 @@ export default function AccountDetail() {
         )}
 
         {activeTab === "funds" && (
-          <TabPanel loading={fundsLoading} empty={funds.length === 0} emptyLabel="No funds">
+          <TabPanel
+            loading={fundsLoading}
+            empty={funds.length === 0}
+            emptyLabel="No funds"
+            illustration="growth-chart"
+          >
             <div className="space-y-3">
             <div className="border rounded-lg overflow-x-auto">
               <table className="w-full text-sm">
@@ -416,6 +430,7 @@ export default function AccountDetail() {
             loading={teamLoading}
             empty={!team?.managers.length && !team?.officers.length}
             emptyLabel="No linked managers or officers"
+            illustration="collaboration"
           >
             <div className="grid gap-4 md:grid-cols-2">
               <StaffCard title="Managers" members={team?.managers ?? []} />
@@ -461,7 +476,11 @@ export default function AccountDetail() {
                   />
                 </Row>
                 {!accountKyc?.kyc ? (
-                  <p className="text-muted-foreground">No KYC submission on file.</p>
+                  <EmptyState
+                    illustration="certification"
+                    size="table"
+                    description="No KYC submission on file."
+                  />
                 ) : (
                   <>
                     <Row label="Official name" value={accountKyc.kyc.official_name} />
@@ -505,6 +524,7 @@ export default function AccountDetail() {
             loading={settlementsLoading}
             empty={settlementRequests.length === 0}
             emptyLabel="No settlement requests for this account"
+            illustration="signed-document"
           >
             <SettlementRequestTable requests={settlementRequests} hideAccount />
           </TabPanel>
@@ -524,11 +544,13 @@ function TabPanel({
   loading,
   empty,
   emptyLabel,
+  illustration = "empty-mailbox",
   children,
 }: {
   loading: boolean;
   empty?: boolean;
   emptyLabel?: string;
+  illustration?: IllustrationName;
   children: React.ReactNode;
 }) {
   if (loading) {
@@ -539,7 +561,9 @@ function TabPanel({
     );
   }
   if (empty) {
-    return <p className="text-sm text-muted-foreground py-8 text-center">{emptyLabel}</p>;
+    return (
+      <EmptyState illustration={illustration} size="table" description={emptyLabel} />
+    );
   }
   return <>{children}</>;
 }

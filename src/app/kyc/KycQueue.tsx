@@ -13,7 +13,6 @@ import {
   Image as ImageIcon,
   Loader2,
   Search,
-  Shield,
   User,
   XCircle,
 } from "lucide-react";
@@ -25,6 +24,7 @@ import { kycApi } from "@/services/kyc.api";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { usePagination } from "@/hooks/usePagination";
 import { formatDate } from "@/lib/format";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function KycQueue() {
   const queryClient = useQueryClient();
@@ -191,9 +191,16 @@ export default function KycQueue() {
       </p>
 
       {filteredKYC.length === 0 ? (
-        <div className="border rounded-lg p-12 text-center">
-          <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">No KYC submissions found</p>
+        <div className="border rounded-lg p-8">
+          <EmptyState
+            illustration={
+              kycList.length === 0 ||
+              (searchQuery === "" && statusFilter === "all" && typeFilter === "all")
+                ? "certification"
+                : "file-searching"
+            }
+            description="No KYC submissions found"
+          />
         </div>
       ) : (
         <div className="border rounded-lg overflow-x-auto">

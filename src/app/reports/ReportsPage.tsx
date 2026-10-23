@@ -13,6 +13,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { adminApi, type ReportDuration } from "@/services/admin.api";
 import { formatCurrency } from "@/lib/format";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const PRESET_DURATION: Record<Extract<AppliedFilter, { kind: "preset" }>["preset"], ReportDuration> = {
   "30days": "30d",
@@ -91,7 +92,11 @@ export default function ReportsPage() {
             </CardHeader>
             <CardContent>
               {data.trend.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No confirmed collections in this period.</p>
+                <EmptyState
+                  illustration="growth-chart"
+                  size="table"
+                  description="No confirmed collections in this period."
+                />
               ) : (
                 <>
                   <TrendLineChart data={data.trend} title="Collections for the selected duration" />
@@ -133,6 +138,7 @@ export default function ReportsPage() {
                 rows={data.records}
                 showAccount
                 emptyMessage="No contribution records in this period."
+                emptyIllustration="file-searching"
               />
             </CardContent>
           </Card>

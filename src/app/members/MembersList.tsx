@@ -13,6 +13,7 @@ import { adminApi, type AdminMemberSummary } from "@/services/admin.api";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { usePagination } from "@/hooks/usePagination";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const SELECT_CLASS =
   "h-10 rounded-md border border-input bg-background px-3 text-sm min-w-[10.5rem]";
@@ -201,10 +202,16 @@ export default function MembersList() {
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-muted-foreground">
-                      {hasActiveFilters
-                        ? "No memberships match your filters"
-                        : "No memberships found"}
+                    <td colSpan={7} className="p-6">
+                      <EmptyState
+                        illustration={hasActiveFilters ? "file-searching" : "collaboration"}
+                        size="table"
+                        description={
+                          hasActiveFilters
+                            ? "No memberships match your filters"
+                            : "No memberships found"
+                        }
+                      />
                     </td>
                   </tr>
                 ) : (

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -58,6 +59,7 @@ export default function SignIn() {
     <div className="min-h-screen flex items-center justify-center bg-sidebar p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
+          <EmptyState illustration="secure-password" size="auth" />
           <CardTitle>Pollean System Admin</CardTitle>
           <CardDescription>
             Staff sign-in only. Requires a platform role of superadmin, ops, or support.

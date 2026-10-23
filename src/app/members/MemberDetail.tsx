@@ -9,6 +9,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { ContributionTable } from "@/components/catalog/ContributionTable";
 import { adminApi } from "@/services/admin.api";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function MemberDetail() {
   const { id } = useParams<{ id: string }>();
@@ -37,8 +38,11 @@ export default function MemberDetail() {
           <Link to="/members">← All members</Link>
         </Button>
         <Card className="mt-4">
-          <CardContent className="pt-6 text-sm text-destructive">
-            {error instanceof Error ? error.message : "Member not found"}
+          <CardContent className="pt-6">
+            <EmptyState
+              illustration="files-missing"
+              description={error instanceof Error ? error.message : "Member not found"}
+            />
           </CardContent>
         </Card>
       </SectionPage>

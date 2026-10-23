@@ -9,6 +9,7 @@ import { ContributionTable } from "@/components/catalog/ContributionTable";
 import { SettlementRequestTable } from "@/components/settlements/SettlementRequestTable";
 import { adminApi } from "@/services/admin.api";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function FundDetail() {
   const { id } = useParams<{ id: string }>();
@@ -41,8 +42,11 @@ export default function FundDetail() {
           <Link to="/funds">← All funds</Link>
         </Button>
         <Card className="mt-4">
-          <CardContent className="pt-6 text-sm text-destructive">
-            {error instanceof Error ? error.message : "Fund not found"}
+          <CardContent className="pt-6">
+            <EmptyState
+              illustration="files-missing"
+              description={error instanceof Error ? error.message : "Fund not found"}
+            />
           </CardContent>
         </Card>
       </SectionPage>
@@ -121,7 +125,11 @@ export default function FundDetail() {
             <p className="text-sm text-muted-foreground">Loading requests…</p>
           )}
           {!settlementsLoading && settlementRequests.length === 0 && (
-            <p className="text-sm text-muted-foreground">No settlement requests for this fund.</p>
+            <EmptyState
+              illustration="signed-document"
+              size="table"
+              description="No settlement requests for this fund."
+            />
           )}
           {settlementRequests.length > 0 && (
             <SettlementRequestTable requests={settlementRequests} hideFund />

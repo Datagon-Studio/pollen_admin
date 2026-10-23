@@ -14,6 +14,7 @@ import { useSortedRows } from "@/lib/table-sort";
 import { SortableTh } from "@/components/ui/sortable-th";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { usePagination } from "@/hooks/usePagination";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const filters: Array<"all" | SettlementRequestStatus> = [
   "all",
@@ -154,8 +155,14 @@ export default function SettlementsList() {
             </div>
           )}
           {!isLoading && !error && filtered.length === 0 && (
-            <div className="p-10 text-center text-muted-foreground">
-              No settlement requests match this view.
+            <div className="p-6">
+              <EmptyState
+                illustration={
+                  status === "all" && !search.trim() ? "signed-document" : "file-searching"
+                }
+                size="table"
+                description="No settlement requests match this view."
+              />
             </div>
           )}
         </div>

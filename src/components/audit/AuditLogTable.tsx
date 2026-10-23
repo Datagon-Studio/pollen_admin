@@ -7,6 +7,7 @@ import { TablePagination } from "@/components/ui/table-pagination";
 import { usePagination } from "@/hooks/usePagination";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { AuditLogEntry } from "@/services/admin.api";
+import { EmptyState, type IllustrationName } from "@/components/ui/empty-state";
 
 const categoryLabels: Record<string, string> = {
   AUTH: "Auth",
@@ -24,6 +25,7 @@ type AuditLogTableProps = {
   showAccount?: boolean;
   accountNames?: ReadonlyMap<string, string | null>;
   emptyMessage?: string;
+  emptyIllustration?: IllustrationName;
 };
 
 function accountName(
@@ -39,6 +41,7 @@ export function AuditLogTable({
   showAccount = false,
   accountNames,
   emptyMessage = "No audit events",
+  emptyIllustration = "empty-mailbox",
 }: AuditLogTableProps) {
   const namedLogs = useMemo(
     () =>
@@ -73,7 +76,13 @@ export function AuditLogTable({
   );
 
   if (namedLogs.length === 0) {
-    return <p className="text-sm text-muted-foreground py-4">{emptyMessage}</p>;
+    return (
+      <EmptyState
+        illustration={emptyIllustration}
+        size="table"
+        description={emptyMessage}
+      />
+    );
   }
 
   return (
