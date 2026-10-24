@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { getAppUrl } from "@/lib/app-url";
+import { request } from "@/lib/api-client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,10 +41,16 @@ export default function SignIn() {
 
     try {
       setResettingPassword(true);
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${getAppUrl()}/reset-password`,
+      const response = await request("/auth/forgot-password", {
+        method: "POST",
+        body: JSON.stringify({
+          email: email.trim(),
+          origin: window.location.origin,
+        }),
       });
-      if (resetError) throw resetError;
+      if (!response.success) {
+        throw new Error(response.error || "Could not send the reset email.");
+      }
       setNotice("Check your email for a link to reset your password.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not send the reset email.");
