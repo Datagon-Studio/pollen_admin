@@ -19,7 +19,7 @@ import { kycApi } from "@/services/kyc.api";
 import { useStaffRole } from "@/hooks/useStaffRole";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { usePagination } from "@/hooks/usePagination";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatAmount, formatCurrency, formatDate } from "@/lib/format";
 import { EmptyState, type IllustrationName } from "@/components/ui/empty-state";
 
 const TAB_IDS = [
@@ -338,7 +338,7 @@ export default function AccountDetail() {
                     <SortableTh label="Name" column="name" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
                     <SortableTh label="Phone" column="phone" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
                     <SortableTh label="Status" column="status" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
-                    <SortableTh label="Contributions" column="contributions" align="right" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
+                    <SortableTh label="Contributions (GHS)" column="contributions" align="right" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
                   </tr>
                 </thead>
                 <tbody>
@@ -354,7 +354,7 @@ export default function AccountDetail() {
                         <StatusBadge status={m.is_active ? "active" : "inactive"} />
                       </td>
                       <td className="p-3 text-right tabular-nums">
-                        {formatCurrency(m.contribution_total)}
+                        {formatAmount(m.contribution_total)}
                       </td>
                     </tr>
                   ))}
@@ -386,8 +386,8 @@ export default function AccountDetail() {
                 <thead className="bg-muted/50 border-b">
                   <tr>
                     <SortableTh label="Fund" column="fund" sortColumn={fundSort.sortColumn} sortDirection={fundSort.sortDirection} onSort={fundSort.onSort} />
-                    <SortableTh label="Collected" column="collected" align="right" sortColumn={fundSort.sortColumn} sortDirection={fundSort.sortDirection} onSort={fundSort.onSort} />
-                    <SortableTh label="Goal" column="goal" align="right" sortColumn={fundSort.sortColumn} sortDirection={fundSort.sortDirection} onSort={fundSort.onSort} />
+                    <SortableTh label="Collected (GHS)" column="collected" align="right" sortColumn={fundSort.sortColumn} sortDirection={fundSort.sortDirection} onSort={fundSort.onSort} />
+                    <SortableTh label="Goal (GHS)" column="goal" align="right" sortColumn={fundSort.sortColumn} sortDirection={fundSort.sortDirection} onSort={fundSort.onSort} />
                     <SortableTh label="Status" column="status" sortColumn={fundSort.sortColumn} sortDirection={fundSort.sortDirection} onSort={fundSort.onSort} />
                   </tr>
                 </thead>
@@ -400,10 +400,10 @@ export default function AccountDetail() {
                         </Link>
                       </td>
                       <td className="p-3 text-right tabular-nums">
-                        {formatCurrency(f.amount_collected)}
+                        {formatAmount(f.amount_collected)}
                       </td>
                       <td className="p-3 text-right tabular-nums text-muted-foreground">
-                        {f.fund_goal != null ? formatCurrency(f.fund_goal) : "—"}
+                        {f.fund_goal != null ? formatAmount(f.fund_goal) : "—"}
                       </td>
                       <td className="p-3">
                         <StatusBadge status={f.is_active ? "active" : "inactive"} />
