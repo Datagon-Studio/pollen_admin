@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { StaffRoute } from "@/components/auth/StaffRoute";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import SignIn from "@/app/auth/SignIn";
+import ResetPassword from "@/app/auth/ResetPassword";
 import Forbidden from "@/app/Forbidden";
 import NotFound from "@/app/NotFound";
 import Dashboard from "@/app/Dashboard";
@@ -41,6 +42,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/signin" element={<SignIn />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/forbidden" element={<Forbidden />} />
 
           <Route

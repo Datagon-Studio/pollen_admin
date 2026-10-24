@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { getAppUrl } from "@/lib/app-url";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,8 +13,15 @@ export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [searchParams] = useSearchParams();
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState(
+    searchParams.get("reset") === "updated"
+      ? "Your password has been updated. Sign in with the new password."
+      : ""
+  );
   const [loading, setLoading] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
 
@@ -22,6 +30,28 @@ export default function SignIn() {
       navigate("/", { replace: true });
     }
   }, [user, authLoading, navigate]);
+
+  const handleForgotPassword = async () => {
+    setError("");
+    setNotice("");
+    if (!email.trim()) {
+      setError("Enter your email address first.");
+      return;
+    }
+
+    try {
+      setResettingPassword(true);
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${getAppUrl()}/reset-password`,
+      });
+      if (resetError) throw resetError;
+      setNotice("Check your email for a link to reset your password.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not send the reset email.");
+    } finally {
+      setResettingPassword(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,6 +109,9 @@ export default function SignIn() {
                 {error && (
                   <p className="text-sm text-destructive bg-destructive/10 rounded-md p-3">{error}</p>
                 )}
+                {notice && (
+                  <p className="text-sm bg-secondary rounded-md p-3">{notice}</p>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <Input
@@ -113,6 +146,16 @@ export default function SignIn() {
                       ) : (
                         <Eye className="h-4 w-4" />
                       )}
+                    </button>
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleForgotPassword}
+                      disabled={resettingPassword}
+                      className="text-sm text-amber hover:underline font-medium disabled:opacity-50"
+                    >
+                      {resettingPassword ? "Sending…" : "Forgot password?"}
                     </button>
                   </div>
                 </div>
