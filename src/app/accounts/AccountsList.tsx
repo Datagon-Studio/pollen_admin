@@ -15,7 +15,7 @@ import {
 } from "@/services/admin.api";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { usePagination } from "@/hooks/usePagination";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatAmount, formatCurrency, formatDate } from "@/lib/format";
 import { EmptyState } from "@/components/ui/empty-state";
 
 const COLUMN_COUNT = 8;
@@ -140,7 +140,7 @@ export default function AccountsList() {
                   <SortableTh label="KYC" column="kyc" sortColumn={accountSort.sortColumn} sortDirection={accountSort.sortDirection} onSort={accountSort.onSort} />
                   <SortableTh label="Members" column="members" align="right" sortColumn={accountSort.sortColumn} sortDirection={accountSort.sortDirection} onSort={accountSort.onSort} />
                   <SortableTh label="Funds" column="funds" align="right" sortColumn={accountSort.sortColumn} sortDirection={accountSort.sortDirection} onSort={accountSort.onSort} />
-                  <SortableTh label="Collected" column="collected" align="right" sortColumn={accountSort.sortColumn} sortDirection={accountSort.sortDirection} onSort={accountSort.onSort} />
+                  <SortableTh label="Collected (GHS)" column="collected" align="right" sortColumn={accountSort.sortColumn} sortDirection={accountSort.sortDirection} onSort={accountSort.onSort} />
                   <SortableTh label="Created" column="created" sortColumn={accountSort.sortColumn} sortDirection={accountSort.sortDirection} onSort={accountSort.onSort} />
                 </tr>
               </thead>
@@ -269,7 +269,7 @@ function AccountRow({
           {account.active_fund_count}/{account.fund_count}
         </td>
         <td className="p-3 text-right tabular-nums">
-          {formatCurrency(account.total_collected)}
+          {formatAmount(account.total_collected)}
         </td>
         <td className="p-3 text-muted-foreground whitespace-nowrap">
           {formatDate(account.created_at)}

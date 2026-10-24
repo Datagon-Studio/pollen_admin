@@ -1,5 +1,5 @@
 import { useId, useMemo, useState } from "react";
-import { formatCurrency, formatMonthKey } from "@/lib/format";
+import { formatAmount, formatCurrency, formatMonthKey } from "@/lib/format";
 
 export interface TrendPoint {
   month: string;
@@ -276,18 +276,18 @@ export function TrendLineChart({
         <thead>
           <tr>
             <th>Month</th>
-            <th>Total</th>
-            <th>Online</th>
-            <th>Manual</th>
+            <th>Total (GHS)</th>
+            <th>Online (GHS)</th>
+            <th>Manual (GHS)</th>
           </tr>
         </thead>
         <tbody>
           {data.map((d) => (
             <tr key={d.month}>
               <td>{pointLabel(d)}</td>
-              <td>{formatCurrency(d.total)}</td>
-              <td>{formatCurrency(d.online)}</td>
-              <td>{formatCurrency(d.manual)}</td>
+              <td>{formatAmount(d.total)}</td>
+              <td>{formatAmount(d.online)}</td>
+              <td>{formatAmount(d.manual)}</td>
             </tr>
           ))}
         </tbody>
@@ -489,18 +489,18 @@ export function TrendBarChart({
         <thead>
           <tr>
             <th>Month</th>
-            <th>Total</th>
-            <th>Online</th>
-            <th>Manual</th>
+            <th>Total (GHS)</th>
+            <th>Online (GHS)</th>
+            <th>Manual (GHS)</th>
           </tr>
         </thead>
         <tbody>
           {data.map((d) => (
             <tr key={d.month}>
               <td>{pointLabel(d)}</td>
-              <td>{formatCurrency(d.total)}</td>
-              <td>{formatCurrency(d.online)}</td>
-              <td>{formatCurrency(d.manual)}</td>
+              <td>{formatAmount(d.total)}</td>
+              <td>{formatAmount(d.online)}</td>
+              <td>{formatAmount(d.manual)}</td>
             </tr>
           ))}
         </tbody>

@@ -9,7 +9,7 @@ import {
   adminApi,
   SettlementRequestStatus,
 } from "@/services/admin.api";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatAmount, formatDate } from "@/lib/format";
 import { useSortedRows } from "@/lib/table-sort";
 import { SortableTh } from "@/components/ui/sortable-th";
 import { TablePagination } from "@/components/ui/table-pagination";
@@ -105,7 +105,7 @@ export default function SettlementsList() {
                 <SortableTh label="Account" column="account" sortColumn={requestSort.sortColumn} sortDirection={requestSort.sortDirection} onSort={requestSort.onSort} />
                 <SortableTh label="Fund" column="fund" sortColumn={requestSort.sortColumn} sortDirection={requestSort.sortDirection} onSort={requestSort.onSort} />
                 <SortableTh label="Requester" column="requester" sortColumn={requestSort.sortColumn} sortDirection={requestSort.sortDirection} onSort={requestSort.onSort} />
-                <SortableTh label="Amount" column="amount" align="right" sortColumn={requestSort.sortColumn} sortDirection={requestSort.sortDirection} onSort={requestSort.onSort} />
+                <SortableTh label="Amount (GHS)" column="amount" align="right" sortColumn={requestSort.sortColumn} sortDirection={requestSort.sortDirection} onSort={requestSort.onSort} />
                 <SortableTh label="Payment details" column="details" sortColumn={requestSort.sortColumn} sortDirection={requestSort.sortDirection} onSort={requestSort.onSort} />
                 <SortableTh label="Status" column="status" sortColumn={requestSort.sortColumn} sortDirection={requestSort.sortDirection} onSort={requestSort.onSort} />
                 <th className="p-3" />
@@ -123,7 +123,7 @@ export default function SettlementsList() {
                     {request.requester_name || request.requester_email || "Unknown"}
                   </td>
                   <td className="p-3 text-right font-semibold">
-                    {formatCurrency(Number(request.amount))}
+                    {formatAmount(Number(request.amount))}
                   </td>
                   <td className="p-3">
                     <p>{request.destination_account_name}</p>

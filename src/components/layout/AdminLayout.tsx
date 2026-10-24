@@ -100,9 +100,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <div className="min-h-screen flex bg-background">
+    <div className="flex h-screen overflow-hidden bg-background">
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-60 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
+      <aside className="hidden h-full w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border md:flex">
         <div className="h-14 px-4 border-b border-sidebar-border flex flex-col justify-center shrink-0">
           <p className="font-semibold tracking-tight leading-tight">Pollean Admin</p>
           <p className="text-xs text-sidebar-foreground/60 leading-tight">System operations</p>
@@ -115,7 +115,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {/* Top bar */}
         <header className="h-14 border-b bg-card flex items-center justify-between px-4 gap-4 shrink-0">
           <div className="flex items-center gap-3">
@@ -165,7 +165,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           </div>
         )}
 
-        <main className="flex-1 p-4 md:p-6 overflow-auto">{children}</main>
+        <main className="min-h-0 flex-1 overflow-auto p-4 md:p-6">{children}</main>
       </div>
     </div>
   );

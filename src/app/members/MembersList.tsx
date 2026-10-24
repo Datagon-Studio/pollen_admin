@@ -12,7 +12,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { adminApi, type AdminMemberSummary } from "@/services/admin.api";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { usePagination } from "@/hooks/usePagination";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatAmount, formatDate } from "@/lib/format";
 import { EmptyState } from "@/components/ui/empty-state";
 
 const SELECT_CLASS =
@@ -195,7 +195,7 @@ export default function MembersList() {
                   <SortableTh label="Account" column="account" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
                   <SortableTh label="Also in" column="also" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
                   <SortableTh label="Status" column="status" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
-                  <SortableTh label="Contributions" column="contributions" align="right" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
+                  <SortableTh label="Contributions (GHS)" column="contributions" align="right" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
                   <SortableTh label="Joined" column="joined" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
                 </tr>
               </thead>
@@ -249,7 +249,7 @@ export default function MembersList() {
                       <td className="p-3 text-right tabular-nums">
                         <div>{m.contribution_count}</div>
                         <div className="text-xs text-muted-foreground">
-                          {formatCurrency(m.contribution_total)}
+                          {formatAmount(m.contribution_total)}
                         </div>
                       </td>
                       <td className="p-3 text-muted-foreground whitespace-nowrap">

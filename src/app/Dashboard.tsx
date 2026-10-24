@@ -11,7 +11,6 @@ import {
   Loader2,
   Scale,
   ShieldCheck,
-  UserX,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
@@ -112,7 +111,7 @@ export default function Dashboard() {
         <StatCard
           title="Accounts"
           value={String(data.totalAccounts)}
-          subtitle={`${data.activeAccounts} active · ${data.inactiveAccounts} inactive`}
+          subtitle={`${data.activeAccounts} active · ${data.inactiveAccounts} inactive · ${data.suspendedAccounts} suspended`}
           icon={Building2}
         />
         <StatCard
@@ -120,11 +119,6 @@ export default function Dashboard() {
           value={String(data.activeFunds)}
           subtitle={`of ${data.totalFunds} total`}
           icon={FolderOpen}
-        />
-        <StatCard
-          title="Suspended accounts"
-          value={String(data.suspendedAccounts)}
-          icon={UserX}
         />
         <StatCard
           title="Pending KYC"

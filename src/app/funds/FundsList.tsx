@@ -12,7 +12,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { adminApi, type AdminFundSummary } from "@/services/admin.api";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { usePagination } from "@/hooks/usePagination";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatAmount, formatDate } from "@/lib/format";
 import { EmptyState } from "@/components/ui/empty-state";
 
 const SELECT_CLASS =
@@ -217,8 +217,8 @@ export default function FundsList() {
                 <tr>
                   <SortableTh label="Fund" column="fund" sortColumn={fundSort.sortColumn} sortDirection={fundSort.sortDirection} onSort={fundSort.onSort} />
                   <SortableTh label="Account" column="account" sortColumn={fundSort.sortColumn} sortDirection={fundSort.sortDirection} onSort={fundSort.onSort} />
-                  <SortableTh label="Collected" column="collected" align="right" sortColumn={fundSort.sortColumn} sortDirection={fundSort.sortDirection} onSort={fundSort.onSort} />
-                  <SortableTh label="Goal" column="goal" align="right" sortColumn={fundSort.sortColumn} sortDirection={fundSort.sortDirection} onSort={fundSort.onSort} />
+                  <SortableTh label="Collected (GHS)" column="collected" align="right" sortColumn={fundSort.sortColumn} sortDirection={fundSort.sortDirection} onSort={fundSort.onSort} />
+                  <SortableTh label="Goal (GHS)" column="goal" align="right" sortColumn={fundSort.sortColumn} sortDirection={fundSort.sortDirection} onSort={fundSort.onSort} />
                   <SortableTh label="Visibility" column="visibility" sortColumn={fundSort.sortColumn} sortDirection={fundSort.sortDirection} onSort={fundSort.onSort} />
                   <SortableTh label="Status" column="status" sortColumn={fundSort.sortColumn} sortDirection={fundSort.sortDirection} onSort={fundSort.onSort} />
                   <SortableTh label="Created" column="created" sortColumn={fundSort.sortColumn} sortDirection={fundSort.sortDirection} onSort={fundSort.onSort} />
@@ -259,10 +259,10 @@ export default function FundsList() {
                         </Link>
                       </td>
                       <td className="p-3 text-right tabular-nums">
-                        {formatCurrency(f.amount_collected)}
+                        {formatAmount(f.amount_collected)}
                       </td>
                       <td className="p-3 text-right tabular-nums text-muted-foreground">
-                        {f.fund_goal != null ? formatCurrency(f.fund_goal) : "—"}
+                        {f.fund_goal != null ? formatAmount(f.fund_goal) : "—"}
                       </td>
                       <td className="p-3">
                         {f.is_public ? "Public" : "Private"}
