@@ -1,18 +1,55 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import {
+  Building2,
+  CalendarDays,
+  ChevronRight,
+  Clock,
+  FolderOpen,
+  Landmark,
+  Loader2,
+  Scale,
+  ShieldCheck,
+  UserX,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
 import { SectionPage } from "@/components/pages/SectionPage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendLineChart } from "@/components/charts/TrendLineChart";
+import { cn } from "@/lib/utils";
+import { TrendBarChart } from "@/components/charts/TrendLineChart";
 import { SettlementRequestTable } from "@/components/settlements/SettlementRequestTable";
-import { adminApi } from "@/services/admin.api";
+import { adminApi, type DashboardTrendRange } from "@/services/admin.api";
 import { formatCurrency } from "@/lib/format";
 import { EmptyState } from "@/components/ui/empty-state";
+
+const TREND_RANGES: Array<{ id: DashboardTrendRange; label: string }> = [
+  { id: "today", label: "Today" },
+  { id: "yesterday", label: "Yesterday" },
+  { id: "week", label: "This week" },
+  { id: "month", label: "This month" },
+  { id: "ytd", label: "YTD" },
+  { id: "6m", label: "6 months" },
+  { id: "12m", label: "12 months" },
+];
 
 export default function Dashboard() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-dashboard"],
     queryFn: () => adminApi.getDashboard(),
+  });
+  const [settlementsOpen, setSettlementsOpen] = useState(true);
+  const [trendRange, setTrendRange] = useState<DashboardTrendRange>("12m");
+  const {
+    data: trend,
+    isLoading: trendLoading,
+    isFetching: trendFetching,
+    error: trendError,
+  } = useQuery({
+    queryKey: ["admin-dashboard-trend", trendRange],
+    queryFn: () => adminApi.getCollectionTrend(trendRange),
+    placeholderData: keepPreviousData,
   });
   const {
     data: pendingSettlements = [],
@@ -51,50 +88,81 @@ export default function Dashboard() {
       description="Platform-wide pulse: accounts, collections, and ops shortcuts."
       phase="ready"
     >
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="Total accounts" value={String(data.totalAccounts)} />
-        <MetricCard label="Active accounts" value={String(data.activeAccounts)} />
-        <MetricCard label="Active funds" value={`${data.activeFunds} / ${data.totalFunds}`} />
-        <MetricCard label="Collected (all time)" value={formatCurrency(data.totalCollected)} />
-        <MetricCard
-          label="Collected this month"
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <StatCard
+          title="Collected (all time)"
+          value={formatCurrency(data.totalCollected)}
+          icon={Wallet}
+        />
+        <StatCard
+          title="Collected this month"
           value={formatCurrency(data.collectedThisMonth)}
+          icon={CalendarDays}
         />
-        <MetricCard label="Inactive accounts" value={String(data.inactiveAccounts)} />
-        <MetricCard label="Suspended accounts" value={String(data.suspendedAccounts)} />
-        <MetricCard
-          label="Pending KYC"
-          value={
-            data.pendingKycCount > 0 ? (
-              <Link to="/kyc" className="text-primary hover:underline">
-                {data.pendingKycCount}
-              </Link>
-            ) : (
-              "0"
-            )
-          }
+        <StatCard
+          title="Total settlement"
+          value={formatCurrency(data.totalSettlement)}
+          icon={Landmark}
         />
-        <MetricCard
-          label="Pending settlements"
-          value={
-            settlementsLoading ? (
-              "…"
-            ) : pendingSettlements.length > 0 ? (
-              <Link to="/settlements" className="text-primary hover:underline">
-                {pendingSettlements.length}
-              </Link>
-            ) : (
-              "0"
-            )
-          }
+        <StatCard
+          title="Current balance"
+          value={formatCurrency(data.currentBalance)}
+          icon={Scale}
+        />
+        <StatCard
+          title="Accounts"
+          value={String(data.totalAccounts)}
+          subtitle={`${data.activeAccounts} active · ${data.inactiveAccounts} inactive`}
+          icon={Building2}
+        />
+        <StatCard
+          title="Active funds"
+          value={String(data.activeFunds)}
+          subtitle={`of ${data.totalFunds} total`}
+          icon={FolderOpen}
+        />
+        <StatCard
+          title="Suspended accounts"
+          value={String(data.suspendedAccounts)}
+          icon={UserX}
+        />
+        <StatCard
+          title="Pending KYC"
+          value={String(data.pendingKycCount)}
+          icon={ShieldCheck}
+          href={data.pendingKycCount > 0 ? "/kyc" : undefined}
+        />
+        <StatCard
+          title="Pending settlements"
+          value={settlementsLoading ? "…" : String(pendingSettlements.length)}
+          icon={Clock}
+          href={!settlementsLoading && pendingSettlements.length > 0 ? "/settlements" : undefined}
         />
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Pending settlement requests</CardTitle>
+        <CardHeader className="p-0">
+          <CardTitle className="text-base">
+            <button
+              type="button"
+              className="flex w-full items-center justify-between gap-3 p-6 text-left hover:bg-muted/40"
+              aria-expanded={settlementsOpen}
+              aria-controls="pending-settlement-requests"
+              onClick={() => setSettlementsOpen((open) => !open)}
+            >
+              <span>Pending settlement requests</span>
+              <ChevronRight
+                className={cn(
+                  "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+                  settlementsOpen && "rotate-90",
+                )}
+                aria-hidden
+              />
+            </button>
+          </CardTitle>
         </CardHeader>
-        <CardContent>
+        {settlementsOpen && (
+        <CardContent id="pending-settlement-requests">
           {settlementsLoading && (
             <p className="text-sm text-muted-foreground">Loading requests…</p>
           )}
@@ -116,28 +184,60 @@ export default function Dashboard() {
             <SettlementRequestTable requests={pendingSettlements} />
           )}
         </CardContent>
+        )}
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">12-month collection trend</CardTitle>
+        <CardHeader className="flex flex-col gap-3 space-y-0 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle className="text-base">Collection trend</CardTitle>
+          <div className="flex flex-wrap gap-1" role="group" aria-label="Collection range">
+            {TREND_RANGES.map((option) => {
+              const selected = trendRange === option.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => setTrendRange(option.id)}
+                  className={cn(
+                    "rounded-md px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    selected
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
         </CardHeader>
         <CardContent>
-          <TrendLineChart data={data.monthlyTrend} />
+          {trendError && (
+            <p className="text-sm text-destructive">
+              {trendError instanceof Error ? trendError.message : "Failed to load collection trend"}
+            </p>
+          )}
+          {trendLoading && !trend && (
+            <div className="flex h-56 items-center justify-center">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          )}
+          {trend && (
+            <div className={cn(trendFetching && "opacity-60")}>
+              <TrendBarChart
+                data={trend.trend}
+                title={`Collections for ${TREND_RANGES.find((option) => option.id === trend.range)?.label ?? "the selected range"}`}
+              />
+            </div>
+          )}
           <div className="flex flex-wrap gap-4 mt-2 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
-              <span className="h-0.5 w-4 rounded-full bg-primary" />
-              Total
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-0.5 w-4 rounded-full bg-foreground" />
+              <span className="h-2.5 w-2.5 rounded-sm bg-foreground" />
               Online
             </span>
             <span className="flex items-center gap-1.5">
-              <span
-                className="h-px w-4 border-t border-dashed border-muted-foreground"
-                aria-hidden
-              />
+              <span className="h-2.5 w-2.5 rounded-sm bg-primary" />
               Manual
             </span>
           </div>
@@ -147,23 +247,41 @@ export default function Dashboard() {
   );
 }
 
-function MetricCard({
-  label,
+function StatCard({
+  title,
   value,
+  subtitle,
+  icon: Icon,
+  href,
 }: {
-  label: string;
-  value: React.ReactNode;
+  title: string;
+  value: string;
+  subtitle?: string;
+  icon: LucideIcon;
+  href?: string;
 }) {
+  const valueClass = cn(
+    "font-semibold text-foreground tabular-nums",
+    value.length >= 15 ? "text-lg" : value.length >= 12 ? "text-xl" : "text-2xl",
+  );
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {label}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-2xl font-semibold tabular-nums">{value}</p>
-      </CardContent>
-    </Card>
+    <div className="bg-card rounded-lg border border-border border-t-2 border-t-foreground p-5 transition-shadow hover:shadow-sm">
+      <div className="space-y-2">
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-sm font-medium text-muted-foreground">{title}</p>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-foreground/10">
+            <Icon className="h-5 w-5 text-foreground" />
+          </div>
+        </div>
+        {href ? (
+          <Link to={href} className={cn(valueClass, "inline-block hover:underline")}>
+            {value}
+          </Link>
+        ) : (
+          <p className={valueClass}>{value}</p>
+        )}
+        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+      </div>
+    </div>
   );
 }

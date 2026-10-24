@@ -103,9 +103,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex bg-background">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-60 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
-        <div className="p-4 border-b border-sidebar-border">
-          <p className="font-semibold tracking-tight">Pollean Admin</p>
-          <p className="text-xs text-sidebar-foreground/60 mt-0.5">System operations</p>
+        <div className="h-14 px-4 border-b border-sidebar-border flex flex-col justify-center shrink-0">
+          <p className="font-semibold tracking-tight leading-tight">Pollean Admin</p>
+          <p className="text-xs text-sidebar-foreground/60 leading-tight">System operations</p>
         </div>
         <nav className="flex-1 p-3 space-y-1">
           <NavLinks />

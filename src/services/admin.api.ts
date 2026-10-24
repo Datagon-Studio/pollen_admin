@@ -2,6 +2,19 @@ import { request } from "@/lib/api-client";
 
 export type ReportDuration = "7d" | "30d" | "3m" | "6m" | "12m" | "ytd" | "all" | "custom";
 
+export type DashboardTrendRange = "today" | "yesterday" | "week" | "month" | "ytd" | "6m" | "12m";
+
+export interface CollectionTrend {
+  range: DashboardTrendRange;
+  trend: Array<{
+    month: string;
+    label: string;
+    online: number;
+    manual: number;
+    total: number;
+  }>;
+}
+
 export interface PlatformReport {
   duration: ReportDuration;
   startDate: string | null;
@@ -37,6 +50,8 @@ export interface PlatformDashboard {
   totalFunds: number;
   totalCollected: number;
   collectedThisMonth: number;
+  totalSettlement: number;
+  currentBalance: number;
   pendingKycCount: number;
   monthlyTrend: Array<{
     month: string;
@@ -299,6 +314,17 @@ export const adminApi = {
     );
     if (!response.success || !response.data) {
       throw new Error(response.error || "Failed to update settlement request");
+    }
+    return response.data;
+  },
+
+  async getCollectionTrend(range: DashboardTrendRange): Promise<CollectionTrend> {
+    const response = await request<CollectionTrend>(
+      `/admin/dashboard/trend${qs({ range })}`,
+      { method: "GET" }
+    );
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Failed to load collection trend");
     }
     return response.data;
   },

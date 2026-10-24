@@ -29,7 +29,7 @@ export function SectionPage({
     badge === null ? null : (badge ?? <Badge variant="secondary">{phaseLabels[phase]}</Badge>);
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
