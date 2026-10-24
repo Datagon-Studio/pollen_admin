@@ -1,35 +1,37 @@
-<<<<<<< HEAD
-import { FormEvent, useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-=======
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
->>>>>>> 415b5bd50ab15a207ac420d164d74a8651ffaa14
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-<<<<<<< HEAD
-import { EmptyState } from "@/components/ui/empty-state";
-=======
 
-function getAuthErrorFromUrl(searchParams: URLSearchParams): string | null {
-  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+function hashParams(): URLSearchParams {
+  return new URLSearchParams(window.location.hash.replace(/^#/, ""));
+}
+
+function getAuthErrorFromUrl(searchParams: URLSearchParams, isInvite: boolean): string | null {
+  const hash = hashParams();
   const error =
     searchParams.get("error") ||
     searchParams.get("error_code") ||
-    hashParams.get("error") ||
-    hashParams.get("error_code");
-  const description =
-    searchParams.get("error_description") || hashParams.get("error_description");
+    hash.get("error") ||
+    hash.get("error_code");
+  const description = searchParams.get("error_description") || hash.get("error_description");
 
   if (!error && !description) return null;
 
   const normalized = `${error || ""} ${description || ""}`.toLowerCase();
-  if (normalized.includes("otp_expired") || normalized.includes("expired")) {
+  const expired = normalized.includes("otp_expired") || normalized.includes("expired");
+  if (isInvite && (expired || normalized.includes("access_denied") || description)) {
+    return (
+      description?.replace(/\+/g, " ") ||
+      "This password setup link is no longer valid. Ask a super admin to invite you again."
+    );
+  }
+  if (expired) {
     return "This reset link has expired or was already used. Request a new one from the sign-in page.";
   }
   if (normalized.includes("access_denied")) {
@@ -37,17 +39,10 @@ function getAuthErrorFromUrl(searchParams: URLSearchParams): string | null {
   }
   return description?.replace(/\+/g, " ") || "Unable to open this reset link.";
 }
->>>>>>> 415b5bd50ab15a207ac420d164d74a8651ffaa14
 
 export default function ResetPassword() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-<<<<<<< HEAD
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [verifying, setVerifying] = useState(false);
-  const [tokenReady, setTokenReady] = useState(false);
-=======
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -55,57 +50,32 @@ export default function ResetPassword() {
   const [tokenReady, setTokenReady] = useState(false);
   const [awaitingRecovery, setAwaitingRecovery] = useState(() => {
     const hash = window.location.hash;
-    return hash.includes("type=recovery") || hash.includes("access_token");
+    return (
+      hash.includes("type=recovery") ||
+      hash.includes("type=invite") ||
+      hash.includes("access_token")
+    );
   });
->>>>>>> 415b5bd50ab15a207ac420d164d74a8651ffaa14
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
 
   const tokenHash = searchParams.get("token_hash");
-<<<<<<< HEAD
-  const recoveryType = searchParams.get("type") === "invite" ? "invite" : "recovery";
+  const isInvite = (searchParams.get("type") || hashParams().get("type")) === "invite";
+  const recoveryType = isInvite ? "invite" : "recovery";
 
   useEffect(() => {
-    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-    const description =
-      searchParams.get("error_description") || hashParams.get("error_description");
-    const urlError = searchParams.get("error") || hashParams.get("error");
-    if (urlError || description) {
-      setError(
-        description?.replace(/\+/g, " ") ||
-          "This password setup link is no longer valid. Ask a super admin to invite you again."
-      );
-=======
-  const recoveryType = searchParams.get("type") || "recovery";
-
-  useEffect(() => {
-    const urlError = getAuthErrorFromUrl(searchParams);
+    const urlError = getAuthErrorFromUrl(searchParams, isInvite);
     if (urlError) {
       setError(urlError);
       setAwaitingRecovery(false);
->>>>>>> 415b5bd50ab15a207ac420d164d74a8651ffaa14
     }
-  }, [searchParams]);
+  }, [searchParams, isInvite]);
 
   useEffect(() => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event) => {
-<<<<<<< HEAD
-      if (event === "PASSWORD_RECOVERY") setTokenReady(true);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (user) setTokenReady(true);
-  }, [user]);
-
-  const continueWithToken = async () => {
-    if (!tokenHash) return;
-    setVerifying(true);
-=======
       if (event === "PASSWORD_RECOVERY") {
         setError("");
         setTokenReady(true);
@@ -126,7 +96,11 @@ export default function ResetPassword() {
       return;
     }
     const hash = window.location.hash;
-    if (!hash.includes("access_token") && !hash.includes("type=recovery")) {
+    if (
+      !hash.includes("access_token") &&
+      !hash.includes("type=recovery") &&
+      !hash.includes("type=invite")
+    ) {
       setAwaitingRecovery(false);
     }
   }, [authLoading, user]);
@@ -135,55 +109,20 @@ export default function ResetPassword() {
     if (!tokenHash) return;
 
     setVerifyingToken(true);
->>>>>>> 415b5bd50ab15a207ac420d164d74a8651ffaa14
     setError("");
     try {
       const { error: verifyError } = await supabase.auth.verifyOtp({
         token_hash: tokenHash,
-<<<<<<< HEAD
         type: recoveryType,
-      });
-      if (verifyError) {
-        throw new Error(
-          "This password setup link has expired or was already used. Ask a super admin to invite you again."
-        );
-      }
-      setTokenReady(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to verify this password setup link.");
-    } finally {
-      setVerifying(false);
-    }
-  };
-
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    setError("");
-    if (password.length < 8) {
-      setError("Use a password of at least 8 characters.");
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError("Those passwords do not match.");
-      return;
-    }
-    setLoading(true);
-    try {
-      const { error: updateError } = await supabase.auth.updateUser({ password });
-      if (updateError) throw updateError;
-      await supabase.auth.signOut();
-      navigate("/signin", { replace: true });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not update the password.");
-=======
-        type: recoveryType === "invite" ? "invite" : "recovery",
       });
 
       if (verifyError) {
         const message = verifyError.message?.toLowerCase() || "";
         if (message.includes("expired") || message.includes("otp") || message.includes("invalid")) {
           throw new Error(
-            "This reset link has expired or was already used. Request a new one from the sign-in page."
+            isInvite
+              ? "This password setup link has expired or was already used. Ask a super admin to invite you again."
+              : "This reset link has expired or was already used. Request a new one from the sign-in page."
           );
         }
         throw verifyError;
@@ -191,23 +130,29 @@ export default function ResetPassword() {
 
       setTokenReady(true);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Unable to verify this reset link.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : isInvite
+            ? "Unable to verify this password setup link."
+            : "Unable to verify this reset link."
+      );
     } finally {
       setVerifyingToken(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setError("");
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+      setError("Use a password of at least 8 characters.");
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError("Those passwords do not match.");
       return;
     }
 
@@ -219,117 +164,34 @@ export default function ResetPassword() {
       await supabase.auth.signOut();
       navigate("/signin?reset=updated", { replace: true });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Could not update the password. Try again.");
->>>>>>> 415b5bd50ab15a207ac420d164d74a8651ffaa14
+      setError(err instanceof Error ? err.message : "Could not update the password.");
     } finally {
       setLoading(false);
     }
   };
 
-<<<<<<< HEAD
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-sm text-muted-foreground">Loading…</p>
-=======
   if (authLoading || (awaitingRecovery && !tokenReady && !user)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-muted-foreground text-sm">Loading…</p>
->>>>>>> 415b5bd50ab15a207ac420d164d74a8651ffaa14
       </div>
     );
   }
 
   const canSetPassword = Boolean(user) || tokenReady;
-<<<<<<< HEAD
-  const hasInviteToken = Boolean(tokenHash) && !canSetPassword;
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-sidebar p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <EmptyState
-            illustration={canSetPassword ? "secure-password" : "forgot-password"}
-            size="auth"
-          />
-          <CardTitle>Set a password</CardTitle>
-          <CardDescription>
-            {canSetPassword
-              ? "Choose a password, then sign in to the admin portal."
-              : hasInviteToken
-                ? "Confirm below before the invite link is used."
-                : "Open the password setup link from your email."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {canSetPassword ? (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</p>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="password">New password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  autoComplete="new-password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  required
-                  disabled={loading}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  autoComplete="new-password"
-                  value={confirmPassword}
-                  onChange={(event) => setConfirmPassword(event.target.value)}
-                  required
-                  disabled={loading}
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Saving…" : "Save password"}
-              </Button>
-            </form>
-          ) : hasInviteToken ? (
-            <div className="space-y-4">
-              {error && (
-                <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</p>
-              )}
-              <p className="text-sm text-muted-foreground">
-                Confirm you want to set your password. This keeps an email scanner from using the
-                link first.
-              </p>
-              <Button type="button" className="w-full" onClick={continueWithToken} disabled={verifying}>
-                {verifying ? "Verifying…" : "Continue"}
-              </Button>
-              <Button type="button" variant="outline" className="w-full" onClick={() => navigate("/signin")}>
-                Back to sign in
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {error ? (
-                <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</p>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Check your email and open the password setup link.
-                </p>
-              )}
-              <Button type="button" variant="outline" className="w-full" onClick={() => navigate("/signin")}>
-                Back to sign in
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-=======
-  const hasResetToken = Boolean(tokenHash) && !canSetPassword;
+  const hasToken = Boolean(tokenHash) && !canSetPassword;
+  const title = isInvite ? "Set a password" : "Reset password";
+  const description = canSetPassword
+    ? isInvite
+      ? "Choose a password, then sign in to the admin portal."
+      : "Choose a new password for your staff account."
+    : hasToken
+      ? isInvite
+        ? "Confirm below before the invite link is used. This keeps an email scanner from using the link first."
+        : "Confirm below to continue. This keeps email scanners from using the link."
+      : isInvite
+        ? "Open the password setup link from your email."
+        : "Open the reset link from your email to choose a new password.";
 
   return (
     <div className="h-screen bg-background overflow-hidden">
@@ -345,14 +207,8 @@ export default function ResetPassword() {
         <div className="flex items-center justify-center p-4 h-full overflow-y-auto">
           <Card className="w-full max-w-md">
             <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl text-center">Reset password</CardTitle>
-              <CardDescription className="text-center">
-                {canSetPassword
-                  ? "Choose a new password for your staff account."
-                  : hasResetToken
-                    ? "Confirm below to continue. This keeps email scanners from using the link."
-                    : "Open the reset link from your email to choose a new password."}
-              </CardDescription>
+              <CardTitle className="text-2xl text-center">{title}</CardTitle>
+              <CardDescription className="text-center">{description}</CardDescription>
             </CardHeader>
             <CardContent>
               {canSetPassword ? (
@@ -368,7 +224,7 @@ export default function ResetPassword() {
                         type={showPassword ? "text" : "password"}
                         autoComplete="new-password"
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(event) => setPassword(event.target.value)}
                         disabled={loading}
                         required
                         minLength={8}
@@ -392,25 +248,35 @@ export default function ResetPassword() {
                       type={showPassword ? "text" : "password"}
                       autoComplete="new-password"
                       value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      onChange={(event) => setConfirmPassword(event.target.value)}
                       disabled={loading}
                       required
                       minLength={8}
                     />
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Updating…" : "Update password"}
+                    {loading ? "Saving…" : isInvite ? "Save password" : "Update password"}
                   </Button>
                 </form>
-              ) : hasResetToken ? (
+              ) : hasToken ? (
                 <div className="space-y-4">
                   {error && (
                     <p className="text-sm text-destructive bg-destructive/10 rounded-md p-3">{error}</p>
                   )}
-                  <Button className="w-full" onClick={handleContinueWithToken} disabled={verifyingToken}>
+                  <Button
+                    type="button"
+                    className="w-full"
+                    onClick={handleContinueWithToken}
+                    disabled={verifyingToken}
+                  >
                     {verifyingToken ? "Verifying…" : "Continue"}
                   </Button>
-                  <Button variant="outline" className="w-full" onClick={() => navigate("/signin")}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => navigate("/signin")}
+                  >
                     Back to sign in
                   </Button>
                 </div>
@@ -420,10 +286,17 @@ export default function ResetPassword() {
                     <p className="text-sm text-destructive bg-destructive/10 rounded-md p-3">{error}</p>
                   ) : (
                     <p className="text-sm text-muted-foreground text-center">
-                      Check your email and open the reset link to continue.
+                      {isInvite
+                        ? "Check your email and open the password setup link."
+                        : "Check your email and open the reset link to continue."}
                     </p>
                   )}
-                  <Button variant="outline" className="w-full" onClick={() => navigate("/signin")}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => navigate("/signin")}
+                  >
                     Back to sign in
                   </Button>
                 </div>
@@ -432,7 +305,6 @@ export default function ResetPassword() {
           </Card>
         </div>
       </div>
->>>>>>> 415b5bd50ab15a207ac420d164d74a8651ffaa14
     </div>
   );
 }
