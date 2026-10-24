@@ -264,6 +264,28 @@ function qs(params: Record<string, string | undefined>): string {
   return s ? `?${s}` : "";
 }
 
+export interface AdminStaffMember {
+  user_id: string;
+  email: string;
+  full_name: string | null;
+  role: "superadmin" | "ops" | "support";
+  created_at: string;
+  last_sign_in_at: string | null;
+}
+
+export interface InvitedStaff extends AdminStaffMember {
+  delivery: "password-link" | "sign-in-link" | "password-set";
+}
+
+export interface InviteStaffInput {
+  email: string;
+  fullName?: string;
+  role: AdminStaffMember["role"];
+  signIn: "email" | "password";
+  password?: string;
+  autoConfirm?: boolean;
+}
+
 export const adminApi = {
   async listSettlementRequests(params?: {
     status?: SettlementRequestStatus;
@@ -559,5 +581,41 @@ export const adminApi = {
       throw new Error(response.error || "Failed to load audit logs");
     }
     return response.data;
+  },
+
+  async listStaff(): Promise<AdminStaffMember[]> {
+    const response = await request<AdminStaffMember[]>("/admin/staff", { method: "GET" });
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Failed to load staff");
+    }
+    return response.data;
+  },
+
+  async inviteStaff(input: InviteStaffInput): Promise<InvitedStaff> {
+    const response = await request<InvitedStaff>("/admin/staff/invite", {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Failed to invite staff");
+    }
+    return response.data;
+  },
+
+  async changeStaffRole(userId: string, role: AdminStaffMember["role"]): Promise<void> {
+    const response = await request(`/admin/staff/${userId}/role`, {
+      method: "PATCH",
+      body: JSON.stringify({ role }),
+    });
+    if (!response.success) {
+      throw new Error(response.error || "Failed to change role");
+    }
+  },
+
+  async revokeStaff(userId: string): Promise<void> {
+    const response = await request(`/admin/staff/${userId}/revoke`, { method: "POST" });
+    if (!response.success) {
+      throw new Error(response.error || "Failed to revoke access");
+    }
   },
 };

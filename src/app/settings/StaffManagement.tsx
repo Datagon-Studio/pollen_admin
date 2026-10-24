@@ -1,4 +1,5 @@
 import { FormEvent, Fragment, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronRight, Search, UserPlus } from "lucide-react";
 import { SectionPage } from "@/components/pages/SectionPage";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,6 @@ import {
   PORTAL_PAGES,
   STAFF_ROLES,
   accessSummary,
-  pagesMatchTemplate,
   staffRoleLabel,
   staffRoleSummary,
   templatePages,
@@ -24,6 +24,7 @@ import {
 } from "@/lib/staff-roles";
 import { useSortedRows } from "@/lib/table-sort";
 import { cn } from "@/lib/utils";
+import { adminApi, type AdminStaffMember } from "@/services/admin.api";
 
 type PortalStatus = "active" | "invited" | "revoked";
 
@@ -37,9 +38,6 @@ type StaffMember = {
   pages: PortalPageId[];
   status: PortalStatus;
   lastSignIn: string | null;
-  /** How this preview records they would sign in. No login is created yet. */
-  signIn: SignInSetup;
-  autoConfirm: boolean;
 };
 
 type DialogState =
@@ -54,81 +52,18 @@ const fieldClass =
   "h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const STAFF_QUERY_KEY = ["admin-staff"] as const;
 
-function daysAgo(days: number): string {
-  return new Date(Date.now() - days * 86_400_000).toISOString();
-}
-
-/** Sample roster so the screen can be reviewed before the staff API exists. */
-function withTemplate(
-  member: Omit<StaffMember, "pages" | "signIn" | "autoConfirm"> & {
-    pages?: PortalPageId[];
-    signIn?: SignInSetup;
-    autoConfirm?: boolean;
-  }
-): StaffMember {
+function toStaffMember(row: AdminStaffMember): StaffMember {
   return {
-    signIn: "email",
-    autoConfirm: false,
-    ...member,
-    pages: member.pages ?? templatePages(member.role),
+    id: row.user_id,
+    fullName: row.full_name?.trim() || "",
+    email: row.email,
+    role: row.role,
+    pages: templatePages(row.role),
+    status: row.last_sign_in_at ? "active" : "invited",
+    lastSignIn: row.last_sign_in_at,
   };
-}
-
-function sampleRoster(): StaffMember[] {
-  return [
-    withTemplate({
-      id: "sample-you",
-      fullName: "Kwame Asante",
-      email: "kwame.asante@pollean.com",
-      role: "superadmin",
-      status: "active",
-      lastSignIn: daysAgo(0),
-      signIn: "password",
-      autoConfirm: true,
-    }),
-    withTemplate({
-      id: "sample-efua",
-      fullName: "Efua Boateng",
-      email: "efua.boateng@pollean.com",
-      role: "superadmin",
-      status: "active",
-      lastSignIn: daysAgo(1),
-    }),
-    withTemplate({
-      id: "sample-ama",
-      fullName: "Ama Mensah",
-      email: "ama.mensah@pollean.com",
-      role: "ops",
-      status: "active",
-      lastSignIn: daysAgo(2),
-    }),
-    withTemplate({
-      id: "sample-kojo",
-      fullName: "Kojo Owusu",
-      email: "kojo.owusu@pollean.com",
-      role: "support",
-      status: "active",
-      lastSignIn: daysAgo(6),
-      pages: templatePages("support").filter((page) => page !== "audit"),
-    }),
-    withTemplate({
-      id: "sample-abena",
-      fullName: "Abena Darko",
-      email: "abena.darko@pollean.com",
-      role: "support",
-      status: "invited",
-      lastSignIn: null,
-    }),
-    withTemplate({
-      id: "sample-yaw",
-      fullName: "Yaw Frimpong",
-      email: "yaw.frimpong@pollean.com",
-      role: "ops",
-      status: "revoked",
-      lastSignIn: daysAgo(40),
-    }),
-  ];
 }
 
 function displayName(member: Pick<StaffMember, "fullName" | "email">): string {
@@ -137,10 +72,6 @@ function displayName(member: Pick<StaffMember, "fullName" | "email">): string {
 
 function isCurrent(member: StaffMember): boolean {
   return member.status === "active" || member.status === "invited";
-}
-
-function togglePage(pages: readonly PortalPageId[], page: PortalPageId): PortalPageId[] {
-  return pages.includes(page) ? pages.filter((item) => item !== page) : [...pages, page];
 }
 
 function PageChecks({
@@ -182,8 +113,15 @@ function PageChecks({
 
 export default function StaffManagement() {
   const { profile } = useStaffRole();
-  const [staff, setStaff] = useState<StaffMember[]>(sampleRoster);
-  const [seededYou, setSeededYou] = useState(false);
+  const queryClient = useQueryClient();
+  const staffQuery = useQuery({
+    queryKey: STAFF_QUERY_KEY,
+    queryFn: () => adminApi.listStaff(),
+  });
+  const staff = useMemo(
+    () => (staffQuery.data ?? []).map(toStaffMember),
+    [staffQuery.data]
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | StaffRole>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("current");
@@ -199,30 +137,9 @@ export default function StaffManagement() {
   const [inviteAutoConfirm, setInviteAutoConfirm] = useState(true);
   const [openPagesId, setOpenPagesId] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const dialogTitleId = useId();
-
-  useEffect(() => {
-    if (!profile || seededYou) return;
-    setStaff((current) => {
-      const withoutCollision = current.filter(
-        (member) =>
-          member.id === "sample-you" ||
-          member.email.toLowerCase() !== profile.email.toLowerCase()
-      );
-      return withoutCollision.map((member) =>
-        member.id === "sample-you"
-          ? {
-              ...member,
-              id: profile.user_id,
-              fullName: profile.full_name?.trim() || member.fullName,
-              email: profile.email,
-            }
-          : member
-      );
-    });
-    setSeededYou(true);
-  }, [profile, seededYou]);
 
   useEffect(() => {
     const node = dialogRef.current;
@@ -309,8 +226,8 @@ export default function StaffManagement() {
     (member) => isCurrent(member) && member.pages.includes("staff")
   ).length;
 
-  const changeRole = (member: StaffMember, next: StaffRole) => {
-    if (next === member.role) return;
+  const changeRole = async (member: StaffMember, next: StaffRole) => {
+    if (next === member.role || saving) return;
     if (roleLocked(member)) {
       setNotice("The portal needs at least one super admin. Promote someone else first.");
       return;
@@ -321,45 +238,26 @@ export default function StaffManagement() {
       setNotice("Someone must keep the Staff page. Give it to another person first.");
       return;
     }
-    setStaff((current) =>
-      current.map((row) =>
-        row.id === member.id ? { ...row, role: next, pages: nextPages } : row
-      )
-    );
-    const name = displayName(member);
-    setNotice(
-      isSelf(member)
-        ? `Preview: this roster shows you as ${staffRoleLabel(next)}, with that template's pages. Your signed-in role is unchanged.`
-        : `${name} is now ${staffRoleLabel(next)}. Pages reset to that template.`
-    );
+    setSaving(true);
+    try {
+      await adminApi.changeStaffRole(member.id, next);
+      await queryClient.invalidateQueries({ queryKey: STAFF_QUERY_KEY });
+      const name = displayName(member);
+      setNotice(
+        isSelf(member)
+          ? `You are now ${staffRoleLabel(next)}. Sign in again if a page disappears.`
+          : `${name} is now ${staffRoleLabel(next)}.`
+      );
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Could not change that role.");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const toggleMemberPage = (member: StaffMember, page: PortalPageId) => {
-    if (member.status === "revoked") return;
-    const removingStaff =
-      page === "staff" && member.pages.includes("staff") && isCurrent(member) && staffPageHolders <= 1;
-    if (removingStaff) {
-      setNotice("Someone must keep the Staff page. Give it to another person first.");
-      return;
-    }
-    const nextPages = togglePage(member.pages, page);
-    if (nextPages.length === 0) {
-      setNotice("Leave at least one page on.");
-      return;
-    }
-    setStaff((current) =>
-      current.map((row) => (row.id === member.id ? { ...row, pages: nextPages } : row))
-    );
-    const name = displayName(member);
-    setNotice(
-      pagesMatchTemplate(member.role, nextPages)
-        ? `${name} is back on the ${staffRoleLabel(member.role)} template.`
-        : `${name} has custom page access. The ${staffRoleLabel(member.role)} role stays as the template.`
-    );
-  };
-
-  const submitInvite = (event: FormEvent) => {
+  const submitInvite = async (event: FormEvent) => {
     event.preventDefault();
+    if (saving) return;
     const email = inviteEmail.trim().toLowerCase();
     const fullName = inviteName.trim();
     if (!EMAIL_PATTERN.test(email)) {
@@ -367,15 +265,9 @@ export default function StaffManagement() {
       return;
     }
     const existing = staff.find((member) => member.email.toLowerCase() === email);
-    if (existing && existing.status !== "revoked") {
+    if (existing) {
       setFormError(
         `${displayName(existing)} already has portal access as ${staffRoleLabel(existing.role)}.`
-      );
-      return;
-    }
-    if (existing?.status === "revoked") {
-      setFormError(
-        `${displayName(existing)} is on the revoked list. Restore access instead of inviting again.`
       );
       return;
     }
@@ -389,73 +281,71 @@ export default function StaffManagement() {
         return;
       }
     }
-    if (invitePages.length === 0) {
-      setFormError("Turn on at least one page.");
-      return;
+    setSaving(true);
+    setFormError(null);
+    try {
+      const invited = await adminApi.inviteStaff({
+        email,
+        fullName: fullName || undefined,
+        role: inviteRole,
+        signIn: inviteSetup,
+        password: inviteSetup === "password" ? invitePassword : undefined,
+        autoConfirm: inviteSetup === "password" ? inviteAutoConfirm : undefined,
+      });
+      await queryClient.invalidateQueries({ queryKey: STAFF_QUERY_KEY });
+      setStatusFilter("current");
+      setSearchQuery("");
+      const name = fullName || email;
+      const roleName = staffRoleLabel(inviteRole);
+      if (invited.delivery === "password-link") {
+        setNotice(`${name} is invited as ${roleName}. They will get an email to set a password.`);
+      } else if (invited.delivery === "sign-in-link") {
+        setNotice(
+          `${name} already had a login. They are now ${roleName} and will get an email to sign in with their existing password.`
+        );
+      } else if (inviteAutoConfirm) {
+        setNotice(`${name} can sign in as ${roleName} with the password you set.`);
+      } else {
+        setNotice(
+          `${name} has a password as ${roleName}. They still need to confirm their email before signing in.`
+        );
+      }
+      closeDialog();
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Could not invite that person.");
+    } finally {
+      setSaving(false);
     }
-    const readyNow = inviteSetup === "password" && inviteAutoConfirm;
-    const member: StaffMember = {
-      id: `invite-${email}`,
-      fullName,
-      email,
-      role: inviteRole,
-      pages: invitePages,
-      status: readyNow ? "active" : "invited",
-      lastSignIn: null,
-      signIn: inviteSetup,
-      autoConfirm: inviteSetup === "password" && inviteAutoConfirm,
-    };
-    setStaff((current) => [member, ...current]);
-    setStatusFilter("current");
-    setSearchQuery("");
-    const name = fullName || email;
-    if (inviteSetup === "email") {
-      setNotice(
-        `${name} is invited as ${staffRoleLabel(inviteRole)}. They would receive an email to set a password once the staff API is connected. Nothing was sent.`
-      );
-    } else if (inviteAutoConfirm) {
-      setNotice(
-        `${name} is set up with a password and a confirmed email as ${staffRoleLabel(inviteRole)}. No login was created in this preview.`
-      );
-    } else {
-      setNotice(
-        `${name} is set up with a password as ${staffRoleLabel(inviteRole)}. They would still need to confirm their email. No login was created in this preview.`
-      );
-    }
-    closeDialog();
   };
 
-  const confirmRevoke = () => {
-    if (!dialogMember || dialog.type !== "revoke") return;
+  const confirmRevoke = async () => {
+    if (!dialogMember || dialog.type !== "revoke" || saving) return;
     if (roleLocked(dialogMember)) {
       setFormError("Promote another super admin before revoking this one.");
       return;
     }
-    setStaff((current) =>
-      current.map((row) =>
-        row.id === dialogMember.id ? { ...row, status: "revoked" } : row
-      )
-    );
-    const name = displayName(dialogMember);
-    setNotice(
-      isSelf(dialogMember)
-        ? "Preview: this roster marks your access as revoked. You are still signed in."
-        : `${name} no longer has portal access. Find them under Revoked.`
-    );
-    closeDialog();
+    setSaving(true);
+    setFormError(null);
+    try {
+      await adminApi.revokeStaff(dialogMember.id);
+      await queryClient.invalidateQueries({ queryKey: STAFF_QUERY_KEY });
+      const name = displayName(dialogMember);
+      setNotice(
+        isSelf(dialogMember)
+          ? "Your portal access was removed."
+          : `${name} no longer has portal access. Invite them again to restore it.`
+      );
+      closeDialog();
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Could not revoke access.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const confirmRestore = () => {
     if (!dialogMember || dialog.type !== "restore") return;
-    const nextStatus: PortalStatus = dialogMember.lastSignIn ? "active" : "invited";
-    setStaff((current) =>
-      current.map((row) =>
-        row.id === dialogMember.id ? { ...row, status: nextStatus } : row
-      )
-    );
-    setNotice(
-      `${displayName(dialogMember)} can sign in again as ${staffRoleLabel(dialogMember.role)}.`
-    );
+    setNotice(`Invite ${displayName(dialogMember)} again to restore portal access.`);
     closeDialog();
   };
 
@@ -465,7 +355,7 @@ export default function StaffManagement() {
   return (
     <SectionPage
       title="Staff"
-      description="Invite ops, support, and other super admins. A role is a starting template for which pages they can open, and you can turn pages on or off after that. Super admin only."
+      description="Invite ops, support, and other super admins. Access follows the role. Super admin only."
       badge={null}
       actions={
         <Button type="button" onClick={openInvite}>
@@ -475,8 +365,9 @@ export default function StaffManagement() {
       }
     >
       <p className="text-sm text-muted-foreground">
-        Preview roster with sample people. Invite, role changes, and revoke stay in this browser
-        until the staff API is connected.
+        An email invite sends a password link. Setting a password creates the login here. Revoking
+        access sets their platform role back to a regular user. A group login, if they have one,
+        stays.
       </p>
 
       <section aria-labelledby="staff-access-heading">
@@ -611,7 +502,6 @@ export default function StaffManagement() {
             <option value="current">Current access</option>
             <option value="active">Active</option>
             <option value="invited">Invited</option>
-            <option value="revoked">Revoked</option>
             <option value="all">All statuses</option>
           </select>
         </div>
@@ -620,7 +510,13 @@ export default function StaffManagement() {
           {notice ?? ""}
         </p>
 
-        {filtered.length === 0 ? (
+        {staffQuery.isLoading ? (
+          <p className="text-sm text-muted-foreground">Loading staff…</p>
+        ) : staffQuery.isError ? (
+          <p role="alert" className="text-sm text-destructive">
+            {staffQuery.error instanceof Error ? staffQuery.error.message : "Could not load staff."}
+          </p>
+        ) : filtered.length === 0 ? (
           <div className="rounded-lg border p-8">
             <EmptyState
               illustration={filtersActive ? "file-searching" : "collaboration"}
@@ -724,7 +620,7 @@ export default function StaffManagement() {
                             className={cn(fieldClass, "w-full min-w-[9.5rem]")}
                             aria-label={`Role for ${displayName(member)}`}
                             value={member.role}
-                            disabled={locked || revoked}
+                            disabled={locked || revoked || saving}
                             onChange={(event) =>
                               changeRole(member, event.target.value as StaffRole)
                             }
@@ -804,14 +700,15 @@ export default function StaffManagement() {
                         <tr className="border-b last:border-0 bg-muted/30">
                           <td colSpan={6} className="p-3">
                             <p className="mb-2 text-sm text-muted-foreground">
-                              Pages for {displayName(member)}. The {staffRoleLabel(member.role)}{" "}
-                              role is the template
-                              {staffLocked ? ". The Staff page stays on so the portal keeps an admin." : "."}
+                              Pages for {displayName(member)} follow the {staffRoleLabel(member.role)}{" "}
+                              role.
+                              {staffLocked ? " The Staff page stays on so the portal keeps an admin." : ""}
                             </p>
                             <PageChecks
                               pages={member.pages}
+                              disabled
                               staffLocked={staffLocked}
-                              onToggle={(page) => toggleMemberPage(member, page)}
+                              onToggle={() => undefined}
                             />
                           </td>
                         </tr>
@@ -1000,9 +897,9 @@ export default function StaffManagement() {
               <fieldset className="space-y-2">
                 <legend className="text-sm font-medium">Pages</legend>
                 <p className="text-sm text-muted-foreground">
-                  Started from the {staffRoleLabel(inviteRole)} template. Uncheck a page to hide it.
+                  These pages come with {staffRoleLabel(inviteRole)}. Access follows the role.
                 </p>
-                <PageChecks pages={invitePages} onToggle={(page) => setInvitePages((current) => togglePage(current, page))} />
+                <PageChecks pages={invitePages} disabled onToggle={() => undefined} />
               </fieldset>
               {formError && (
                 <p role="alert" className="text-sm text-destructive">
@@ -1010,10 +907,12 @@ export default function StaffManagement() {
                 </p>
               )}
               <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={closeDialog}>
+                <Button type="button" variant="outline" onClick={closeDialog} disabled={saving}>
                   Cancel
                 </Button>
-                <Button type="submit">{inviteSetup === "email" ? "Invite" : "Create login"}</Button>
+                <Button type="submit" disabled={saving}>
+                  {saving ? "Saving…" : inviteSetup === "email" ? "Invite" : "Create login"}
+                </Button>
               </div>
             </form>
           )}
@@ -1025,9 +924,9 @@ export default function StaffManagement() {
                   Revoke portal access
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {displayName(dialogMember)} ({dialogMember.email}) will not be able to sign in
-                  to the admin portal. A group login, if they have one, stays as it is. You can
-                  restore access later.
+                  {displayName(dialogMember)} ({dialogMember.email}) will leave the staff roster.
+                  A group login, if they have one, stays. Invite them again to restore portal
+                  access.
                 </p>
               </div>
               {formError && (
@@ -1036,11 +935,11 @@ export default function StaffManagement() {
                 </p>
               )}
               <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={closeDialog} autoFocus>
+                <Button type="button" variant="outline" onClick={closeDialog} autoFocus disabled={saving}>
                   Keep access
                 </Button>
-                <Button type="button" variant="destructive" onClick={confirmRevoke}>
-                  Revoke access
+                <Button type="button" variant="destructive" onClick={confirmRevoke} disabled={saving}>
+                  {saving ? "Revoking…" : "Revoke access"}
                 </Button>
               </div>
             </div>
