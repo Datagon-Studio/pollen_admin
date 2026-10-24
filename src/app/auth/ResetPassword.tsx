@@ -25,7 +25,10 @@ function getAuthErrorFromUrl(searchParams: URLSearchParams, isInvite: boolean): 
 
   const normalized = `${error || ""} ${description || ""}`.toLowerCase();
   const expired = normalized.includes("otp_expired") || normalized.includes("expired");
-  if (isInvite && (expired || normalized.includes("access_denied") || description)) {
+  if (isInvite) {
+    if (expired || normalized.includes("access_denied")) {
+      return "This password setup link is no longer valid. Ask a super admin to invite you again.";
+    }
     return (
       description?.replace(/\+/g, " ") ||
       "This password setup link is no longer valid. Ask a super admin to invite you again."
