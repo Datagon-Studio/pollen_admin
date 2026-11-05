@@ -2,6 +2,19 @@ import { request } from "@/lib/api-client";
 
 export type ReportDuration = "7d" | "30d" | "3m" | "6m" | "12m" | "ytd" | "all" | "custom";
 
+export type DashboardTrendRange = "today" | "yesterday" | "week" | "month" | "ytd" | "6m" | "12m";
+
+export interface CollectionTrend {
+  range: DashboardTrendRange;
+  trend: Array<{
+    month: string;
+    label: string;
+    online: number;
+    manual: number;
+    total: number;
+  }>;
+}
+
 export interface PlatformReport {
   duration: ReportDuration;
   startDate: string | null;
@@ -37,6 +50,8 @@ export interface PlatformDashboard {
   totalFunds: number;
   totalCollected: number;
   collectedThisMonth: number;
+  totalSettlement: number;
+  currentBalance: number;
   pendingKycCount: number;
   monthlyTrend: Array<{
     month: string;
@@ -249,6 +264,30 @@ function qs(params: Record<string, string | undefined>): string {
   return s ? `?${s}` : "";
 }
 
+export interface AdminStaffMember {
+  user_id: string;
+  email: string;
+  full_name: string | null;
+  role: "superadmin" | "ops" | "support";
+  created_at: string;
+  last_sign_in_at: string | null;
+}
+
+export interface InvitedStaff extends AdminStaffMember {
+  delivery: "password-link" | "sign-in-link" | "password-set";
+}
+
+export interface InviteStaffInput {
+  email: string;
+  fullName?: string;
+  role: AdminStaffMember["role"];
+  signIn: "email" | "password";
+  password?: string;
+  autoConfirm?: boolean;
+  /** Portal origin for env-aware invite / password links. */
+  portalOrigin?: string;
+}
+
 export const adminApi = {
   async listSettlementRequests(params?: {
     status?: SettlementRequestStatus;
@@ -299,6 +338,17 @@ export const adminApi = {
     );
     if (!response.success || !response.data) {
       throw new Error(response.error || "Failed to update settlement request");
+    }
+    return response.data;
+  },
+
+  async getCollectionTrend(range: DashboardTrendRange): Promise<CollectionTrend> {
+    const response = await request<CollectionTrend>(
+      `/admin/dashboard/trend${qs({ range })}`,
+      { method: "GET" }
+    );
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Failed to load collection trend");
     }
     return response.data;
   },
@@ -533,5 +583,44 @@ export const adminApi = {
       throw new Error(response.error || "Failed to load audit logs");
     }
     return response.data;
+  },
+
+  async listStaff(): Promise<AdminStaffMember[]> {
+    const response = await request<AdminStaffMember[]>("/admin/staff", { method: "GET" });
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Failed to load staff");
+    }
+    return response.data;
+  },
+
+  async inviteStaff(input: InviteStaffInput): Promise<InvitedStaff> {
+    const response = await request<InvitedStaff>("/admin/staff/invite", {
+      method: "POST",
+      body: JSON.stringify({
+        ...input,
+        portalOrigin: input.portalOrigin || window.location.origin,
+      }),
+    });
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Failed to invite staff");
+    }
+    return response.data;
+  },
+
+  async changeStaffRole(userId: string, role: AdminStaffMember["role"]): Promise<void> {
+    const response = await request(`/admin/staff/${userId}/role`, {
+      method: "PATCH",
+      body: JSON.stringify({ role }),
+    });
+    if (!response.success) {
+      throw new Error(response.error || "Failed to change role");
+    }
+  },
+
+  async revokeStaff(userId: string): Promise<void> {
+    const response = await request(`/admin/staff/${userId}/revoke`, { method: "POST" });
+    if (!response.success) {
+      throw new Error(response.error || "Failed to revoke access");
+    }
   },
 };

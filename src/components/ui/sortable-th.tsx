@@ -21,7 +21,10 @@ export function SortableTh({
 
   return (
     <th
-      className={cn("p-3 font-medium", align === "right" ? "text-right" : "text-left")}
+      className={cn(
+        "whitespace-nowrap p-3 font-medium",
+        align === "right" ? "text-right" : "text-left"
+      )}
       aria-sort={active ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}
     >
       <button

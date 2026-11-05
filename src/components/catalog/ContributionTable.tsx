@@ -1,22 +1,25 @@
 import { Link } from "react-router-dom";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatAmount, formatDate } from "@/lib/format";
 import { useSortedRows } from "@/lib/table-sort";
 import { SortableTh } from "@/components/ui/sortable-th";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { usePagination } from "@/hooks/usePagination";
 import type { AdminContributionRow } from "@/services/admin.api";
+import { EmptyState, type IllustrationName } from "@/components/ui/empty-state";
 
 type ContributionTableProps = {
   rows: AdminContributionRow[];
   showAccount?: boolean;
   emptyMessage?: string;
+  emptyIllustration?: IllustrationName;
 };
 
 export function ContributionTable({
   rows,
   showAccount = false,
   emptyMessage = "No contributions",
+  emptyIllustration = "empty-mailbox",
 }: ContributionTableProps) {
   const rowSort = useSortedRows(rows, (row, column) => {
     switch (column) {
@@ -45,7 +48,13 @@ export function ContributionTable({
   );
 
   if (rows.length === 0) {
-    return <p className="text-sm text-muted-foreground py-4">{emptyMessage}</p>;
+    return (
+      <EmptyState
+        illustration={emptyIllustration}
+        size="table"
+        description={emptyMessage}
+      />
+    );
   }
 
   return (
@@ -60,7 +69,7 @@ export function ContributionTable({
             )}
             <SortableTh label="Member" column="member" sortColumn={rowSort.sortColumn} sortDirection={rowSort.sortDirection} onSort={rowSort.onSort} />
             <SortableTh label="Fund" column="fund" sortColumn={rowSort.sortColumn} sortDirection={rowSort.sortDirection} onSort={rowSort.onSort} />
-            <SortableTh label="Amount" column="amount" align="right" sortColumn={rowSort.sortColumn} sortDirection={rowSort.sortDirection} onSort={rowSort.onSort} />
+            <SortableTh label="Amount (GHS)" column="amount" align="right" sortColumn={rowSort.sortColumn} sortDirection={rowSort.sortDirection} onSort={rowSort.onSort} />
             <SortableTh label="Channel" column="channel" sortColumn={rowSort.sortColumn} sortDirection={rowSort.sortDirection} onSort={rowSort.onSort} />
             <SortableTh label="Status" column="status" sortColumn={rowSort.sortColumn} sortDirection={rowSort.sortDirection} onSort={rowSort.onSort} />
           </tr>
@@ -97,7 +106,7 @@ export function ContributionTable({
                   {c.fund_name || "Fund"}
                 </Link>
               </td>
-              <td className="p-3 text-right tabular-nums">{formatCurrency(c.amount)}</td>
+              <td className="p-3 text-right tabular-nums">{formatAmount(c.amount)}</td>
               <td className="p-3 capitalize">{c.channel === "online" ? "Online" : "Manual"}</td>
               <td className="p-3">
                 <StatusBadge

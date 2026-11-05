@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { adminApi } from "@/services/admin.api";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function ContributionDetail() {
   const { id } = useParams<{ id: string }>();
@@ -34,8 +35,11 @@ export default function ContributionDetail() {
           <Link to="/contributions">← All contributions</Link>
         </Button>
         <Card className="mt-4">
-          <CardContent className="pt-6 text-sm text-destructive">
-            {error instanceof Error ? error.message : "Contribution not found"}
+          <CardContent className="pt-6">
+            <EmptyState
+              illustration="files-missing"
+              description={error instanceof Error ? error.message : "Contribution not found"}
+            />
           </CardContent>
         </Card>
       </SectionPage>

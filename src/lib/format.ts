@@ -1,10 +1,13 @@
+const amountFormat = new Intl.NumberFormat("en-GH", {
+  maximumFractionDigits: 0,
+});
+
+export function formatAmount(amount: number): string {
+  return amountFormat.format(amount);
+}
+
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-GH", {
-    style: "currency",
-    currency: "GHS",
-    currencyDisplay: "code",
-    maximumFractionDigits: 0,
-  }).format(amount);
+  return `GHS ${formatAmount(amount)}`;
 }
 
 export function formatDate(dateStr: string): string {
