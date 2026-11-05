@@ -284,6 +284,8 @@ export interface InviteStaffInput {
   signIn: "email" | "password";
   password?: string;
   autoConfirm?: boolean;
+  /** Portal origin for env-aware invite / password links. */
+  portalOrigin?: string;
 }
 
 export const adminApi = {
@@ -594,7 +596,10 @@ export const adminApi = {
   async inviteStaff(input: InviteStaffInput): Promise<InvitedStaff> {
     const response = await request<InvitedStaff>("/admin/staff/invite", {
       method: "POST",
-      body: JSON.stringify(input),
+      body: JSON.stringify({
+        ...input,
+        portalOrigin: input.portalOrigin || window.location.origin,
+      }),
     });
     if (!response.success || !response.data) {
       throw new Error(response.error || "Failed to invite staff");
