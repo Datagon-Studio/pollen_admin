@@ -299,12 +299,26 @@ function AccountExpandedPanel({ account }: { account: AdminAccountSummary }) {
     queryFn: () => adminApi.listMembers({ accountId }),
   });
 
-  // There is no owner column on accounts. The signup trigger links the creator
-  // as the first admin, so the oldest admin link is the closest thing we have.
-  const admins = team?.managers ?? [];
-  const creator = admins[0];
-  const otherAdmins = admins.slice(1);
+  // Account admins (user_accounts.role = admin) plus collectors (officer) —
+  // both have group portal access. Oldest admin link is treated as the creator.
+  const accountAdmins = team?.managers ?? [];
   const collectors = team?.officers ?? [];
+  const creator = accountAdmins[0];
+  const portalAdmins = [
+    ...accountAdmins.map((m, index) => ({
+      ...m,
+      note:
+        index === 0
+          ? "Creator · Account admin"
+          : m.account_role === "admin"
+            ? "Account admin"
+            : "Collector",
+    })),
+    ...collectors.map((m) => ({
+      ...m,
+      note: "Collector · Portal access",
+    })),
+  ];
 
   const netHeld = account.total_collected - account.total_disbursed;
 
@@ -378,32 +392,18 @@ function AccountExpandedPanel({ account }: { account: AdminAccountSummary }) {
         </PanelCard>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <PanelCard title={`Admins (${otherAdmins.length})`}>
+      <div className="grid gap-4 md:grid-cols-1">
+        <PanelCard title={`Admins (${portalAdmins.length})`}>
           {teamLoading ? (
             <PanelLoading />
-          ) : otherAdmins.length === 0 ? (
+          ) : portalAdmins.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No admins beyond the creator
+              No admins or collectors linked to this account
             </p>
           ) : (
             <ul className="space-y-3">
-              {otherAdmins.map((m) => (
-                <StaffEntry key={m.user_id} staff={m} as="li" />
-              ))}
-            </ul>
-          )}
-        </PanelCard>
-
-        <PanelCard title={`Collectors (${collectors.length})`}>
-          {teamLoading ? (
-            <PanelLoading />
-          ) : collectors.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No collectors linked</p>
-          ) : (
-            <ul className="space-y-3">
-              {collectors.map((m) => (
-                <StaffEntry key={m.user_id} staff={m} as="li" />
+              {portalAdmins.map((m) => (
+                <StaffEntry key={`${m.user_id}-${m.account_role}`} staff={m} note={m.note} as="li" />
               ))}
             </ul>
           )}

@@ -39,7 +39,7 @@ const tabs: TabItem[] = [
   { id: "overview", label: "Overview" },
   { id: "members", label: "Members" },
   { id: "funds", label: "Funds" },
-  { id: "team", label: "Manager & officers" },
+  { id: "team", label: "Admins" },
   { id: "contributions", label: "Contributions" },
   { id: "settlements", label: "Settlements" },
   { id: "kyc", label: "KYC" },
@@ -429,12 +429,20 @@ export default function AccountDetail() {
           <TabPanel
             loading={teamLoading}
             empty={!team?.managers.length && !team?.officers.length}
-            emptyLabel="No linked managers or officers"
+            emptyLabel="No admins or collectors linked to this account"
             illustration="collaboration"
           >
             <div className="grid gap-4 md:grid-cols-2">
-              <StaffCard title="Managers" members={team?.managers ?? []} />
-              <StaffCard title="Officers (collectors)" members={team?.officers ?? []} />
+              <StaffCard
+                title="Account admins"
+                roleNote="Account admin"
+                members={team?.managers ?? []}
+              />
+              <StaffCard
+                title="Collectors (portal access)"
+                roleNote="Collector · Portal access"
+                members={team?.officers ?? []}
+              />
             </div>
           </TabPanel>
         )}
@@ -570,9 +578,11 @@ function TabPanel({
 
 function StaffCard({
   title,
+  roleNote,
   members,
 }: {
   title: string;
+  roleNote: string;
   members: Array<{
     user_id: string;
     email: string;
@@ -599,7 +609,7 @@ function StaffCard({
                   <p className="text-muted-foreground text-xs">{m.phone_number}</p>
                 )}
                 <p className="text-xs text-muted-foreground mt-1">
-                  Linked {formatDate(m.linked_at)}
+                  {roleNote} · Linked {formatDate(m.linked_at)}
                 </p>
               </li>
             ))}
