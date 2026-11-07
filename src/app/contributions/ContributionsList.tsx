@@ -12,7 +12,8 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { adminApi, type AdminContributionRow } from "@/services/admin.api";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { usePagination } from "@/hooks/usePagination";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatAmount, formatDate } from "@/lib/format";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const SELECT_CLASS =
   "h-10 rounded-md border border-input bg-background px-3 text-sm min-w-[10.5rem]";
@@ -269,7 +270,7 @@ export default function ContributionsList() {
                   <SortableTh label="Member" column="member" sortColumn={contributionSort.sortColumn} sortDirection={contributionSort.sortDirection} onSort={contributionSort.onSort} />
                   <SortableTh label="Account" column="account" sortColumn={contributionSort.sortColumn} sortDirection={contributionSort.sortDirection} onSort={contributionSort.onSort} />
                   <SortableTh label="Fund" column="fund" sortColumn={contributionSort.sortColumn} sortDirection={contributionSort.sortDirection} onSort={contributionSort.onSort} />
-                  <SortableTh label="Amount" column="amount" align="right" sortColumn={contributionSort.sortColumn} sortDirection={contributionSort.sortDirection} onSort={contributionSort.onSort} />
+                  <SortableTh label="Amount (GHS)" column="amount" align="right" sortColumn={contributionSort.sortColumn} sortDirection={contributionSort.sortDirection} onSort={contributionSort.onSort} />
                   <SortableTh label="Channel" column="channel" sortColumn={contributionSort.sortColumn} sortDirection={contributionSort.sortDirection} onSort={contributionSort.onSort} />
                   <SortableTh label="Status" column="status" sortColumn={contributionSort.sortColumn} sortDirection={contributionSort.sortDirection} onSort={contributionSort.onSort} />
                   <SortableTh label="Reference" column="reference" sortColumn={contributionSort.sortColumn} sortDirection={contributionSort.sortDirection} onSort={contributionSort.onSort} />
@@ -278,10 +279,16 @@ export default function ContributionsList() {
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="p-8 text-center text-muted-foreground">
-                      {hasActiveFilters
-                        ? "No contributions match your filters"
-                        : "No contributions found"}
+                    <td colSpan={8} className="p-6">
+                      <EmptyState
+                        illustration={hasActiveFilters ? "file-searching" : "empty-mailbox"}
+                        size="table"
+                        description={
+                          hasActiveFilters
+                            ? "No contributions match your filters"
+                            : "No contributions found"
+                        }
+                      />
                     </td>
                   </tr>
                 ) : (
@@ -324,7 +331,7 @@ export default function ContributionsList() {
                         </Link>
                       </td>
                       <td className="p-3 text-right tabular-nums">
-                        {formatCurrency(c.amount)}
+                        {formatAmount(c.amount)}
                       </td>
                       <td className="p-3 capitalize">
                         {c.channel === "online" ? "Online" : "Manual"}

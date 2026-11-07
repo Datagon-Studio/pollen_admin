@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { AdminSettlementRequest } from "@/services/admin.api";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatAmount, formatDate } from "@/lib/format";
 import { useSortedRows } from "@/lib/table-sort";
 import { SortableTh } from "@/components/ui/sortable-th";
 import { TablePagination } from "@/components/ui/table-pagination";
@@ -52,7 +52,7 @@ export function SettlementRequestTable({
             {!hideFund && (
               <SortableTh label="Fund" column="fund" sortColumn={requestSort.sortColumn} sortDirection={requestSort.sortDirection} onSort={requestSort.onSort} />
             )}
-            <SortableTh label="Amount" column="amount" align="right" sortColumn={requestSort.sortColumn} sortDirection={requestSort.sortDirection} onSort={requestSort.onSort} />
+            <SortableTh label="Amount (GHS)" column="amount" align="right" sortColumn={requestSort.sortColumn} sortDirection={requestSort.sortDirection} onSort={requestSort.onSort} />
             <SortableTh label="Status" column="status" sortColumn={requestSort.sortColumn} sortDirection={requestSort.sortDirection} onSort={requestSort.onSort} />
             <th className="p-3" />
           </tr>
@@ -66,7 +66,7 @@ export function SettlementRequestTable({
               )}
               {!hideFund && <td className="p-3">{request.fund_name}</td>}
               <td className="p-3 text-right font-semibold">
-                {formatCurrency(Number(request.amount))}
+                {formatAmount(Number(request.amount))}
               </td>
               <td className="p-3">
                 <StatusBadge status={request.status} />

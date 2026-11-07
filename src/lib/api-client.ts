@@ -1,19 +1,22 @@
 import { supabase } from "@/lib/supabase";
 
 // Local dev leaves this unset so Vite proxies /api to the backend.
-// Production builds call the group app's API. VITE_API_URL overrides that
-// (https only — an http URL is blocked from the HTTPS admin site).
+// Vercel Preview must set VITE_API_URL to the development deployment.
+// Vercel Production falls back to the live app API.
 const PRODUCTION_API_BASE_URL = "https://app.pollean.com/api/v1";
+
+declare const __POLLEN_VERCEL_ENV__: string;
 
 function resolveApiBaseUrl(): string {
   const configured = import.meta.env.VITE_API_URL?.trim();
-  if (!configured) {
-    return import.meta.env.PROD ? PRODUCTION_API_BASE_URL : "/api/v1";
+  if (configured) {
+    return configured.replace(
+      /^http:\/\/((?:app\.)?pollean\.com)/,
+      "https://$1"
+    );
   }
-  return configured.replace(
-    /^http:\/\/((?:app\.)?pollean\.com)/,
-    "https://$1"
-  );
+  if (__POLLEN_VERCEL_ENV__ === "production") return PRODUCTION_API_BASE_URL;
+  return "/api/v1";
 }
 
 const API_BASE_URL = resolveApiBaseUrl();

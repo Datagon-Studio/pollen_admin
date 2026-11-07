@@ -192,6 +192,7 @@ export default function AuditLogViewer() {
             emptyMessage={
               hasActiveFilters ? "No audit events match your filters" : "No audit events"
             }
+            emptyIllustration={hasActiveFilters ? "file-searching" : "empty-mailbox"}
           />
         </>
       )}
