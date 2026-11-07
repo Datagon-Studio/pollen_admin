@@ -46,7 +46,7 @@ const statusLabels: Record<StatusType, string> = {
   inactive: "Inactive",
   suspended: "Suspended",
   verified: "Verified",
-  unverified: "Not verified",
+  unverified: "Unverified",
   rejected: "Rejected",
 };
 

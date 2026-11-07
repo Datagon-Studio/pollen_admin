@@ -49,7 +49,11 @@ export interface PlatformDashboard {
   activeFunds: number;
   totalFunds: number;
   totalCollected: number;
+  totalCollectedOnline: number;
+  totalCollectedManual: number;
   collectedThisMonth: number;
+  collectedThisMonthOnline: number;
+  collectedThisMonthManual: number;
   totalSettlement: number;
   currentBalance: number;
   pendingKycCount: number;

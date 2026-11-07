@@ -33,11 +33,49 @@ const TREND_RANGES: Array<{ id: DashboardTrendRange; label: string }> = [
   { id: "12m", label: "12 months" },
 ];
 
+type CollectionChannelFilter = "online" | "manual" | "both";
+
+const CHANNEL_FILTERS: Array<{ id: CollectionChannelFilter; label: string }> = [
+  { id: "online", label: "Online" },
+  { id: "manual", label: "Manual" },
+  { id: "both", label: "Both" },
+];
+
+function collectionTotals(
+  data: {
+    totalCollected: number;
+    totalCollectedOnline?: number;
+    totalCollectedManual?: number;
+    collectedThisMonth: number;
+    collectedThisMonthOnline?: number;
+    collectedThisMonthManual?: number;
+  },
+  channel: CollectionChannelFilter,
+) {
+  if (channel === "online") {
+    return {
+      allTime: data.totalCollectedOnline ?? data.totalCollected,
+      thisMonth: data.collectedThisMonthOnline ?? data.collectedThisMonth,
+    };
+  }
+  if (channel === "manual") {
+    return {
+      allTime: data.totalCollectedManual ?? 0,
+      thisMonth: data.collectedThisMonthManual ?? 0,
+    };
+  }
+  return {
+    allTime: data.totalCollected,
+    thisMonth: data.collectedThisMonth,
+  };
+}
+
 export default function Dashboard() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-dashboard"],
     queryFn: () => adminApi.getDashboard(),
   });
+  const [channelFilter, setChannelFilter] = useState<CollectionChannelFilter>("online");
   const [settlementsOpen, setSettlementsOpen] = useState(true);
   const [trendRange, setTrendRange] = useState<DashboardTrendRange>("12m");
   const {
@@ -81,57 +119,92 @@ export default function Dashboard() {
     );
   }
 
+  const collections = collectionTotals(data, channelFilter);
+  const channelLabel =
+    CHANNEL_FILTERS.find((option) => option.id === channelFilter)?.label ?? "Online";
+
   return (
     <SectionPage
       title="Dashboard"
       description="Platform-wide pulse: accounts, collections, and ops shortcuts."
       phase="ready"
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        <StatCard
-          title="Collected (all time)"
-          value={formatCurrency(data.totalCollected)}
-          icon={Wallet}
-        />
-        <StatCard
-          title="Collected this month"
-          value={formatCurrency(data.collectedThisMonth)}
-          icon={CalendarDays}
-        />
-        <StatCard
-          title="Total settlement"
-          value={formatCurrency(data.totalSettlement)}
-          icon={Landmark}
-        />
-        <StatCard
-          title="Current balance"
-          value={formatCurrency(data.currentBalance)}
-          icon={Scale}
-        />
-        <StatCard
-          title="Accounts"
-          value={String(data.totalAccounts)}
-          subtitle={`${data.activeAccounts} active · ${data.inactiveAccounts} inactive · ${data.suspendedAccounts} suspended`}
-          icon={Building2}
-        />
-        <StatCard
-          title="Active funds"
-          value={String(data.activeFunds)}
-          subtitle={`of ${data.totalFunds} total`}
-          icon={FolderOpen}
-        />
-        <StatCard
-          title="Pending KYC"
-          value={String(data.pendingKycCount)}
-          icon={ShieldCheck}
-          href={data.pendingKycCount > 0 ? "/kyc" : undefined}
-        />
-        <StatCard
-          title="Pending settlements"
-          value={settlementsLoading ? "…" : String(pendingSettlements.length)}
-          icon={Clock}
-          href={!settlementsLoading && pendingSettlements.length > 0 ? "/settlements" : undefined}
-        />
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">
+            Collection stats: {channelLabel.toLowerCase()}
+            {channelFilter !== "both" ? " only" : ""}
+          </p>
+          <div className="flex flex-wrap gap-1" role="group" aria-label="Collection channel">
+            {CHANNEL_FILTERS.map((option) => {
+              const selected = channelFilter === option.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => setChannelFilter(option.id)}
+                  className={cn(
+                    "rounded-md px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    selected
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <StatCard
+            title="Collected (all time)"
+            value={formatCurrency(collections.allTime)}
+            icon={Wallet}
+          />
+          <StatCard
+            title="Collected this month"
+            value={formatCurrency(collections.thisMonth)}
+            icon={CalendarDays}
+          />
+          <StatCard
+            title="Total settlement"
+            value={formatCurrency(data.totalSettlement)}
+            subtitle={channelFilter !== "both" ? "All channels" : undefined}
+            icon={Landmark}
+          />
+          <StatCard
+            title="Current balance"
+            value={formatCurrency(collections.allTime - data.totalSettlement)}
+            subtitle={channelFilter !== "both" ? "Collected − settlements" : undefined}
+            icon={Scale}
+          />
+          <StatCard
+            title="Accounts"
+            value={String(data.totalAccounts)}
+            subtitle={`${data.activeAccounts} active · ${data.inactiveAccounts} inactive · ${data.suspendedAccounts} suspended`}
+            icon={Building2}
+          />
+          <StatCard
+            title="Active funds"
+            value={String(data.activeFunds)}
+            subtitle={`of ${data.totalFunds} total`}
+            icon={FolderOpen}
+          />
+          <StatCard
+            title="Pending KYC"
+            value={String(data.pendingKycCount)}
+            icon={ShieldCheck}
+            href={data.pendingKycCount > 0 ? "/kyc" : undefined}
+          />
+          <StatCard
+            title="Pending settlements"
+            value={settlementsLoading ? "…" : String(pendingSettlements.length)}
+            icon={Clock}
+            href={!settlementsLoading && pendingSettlements.length > 0 ? "/settlements" : undefined}
+          />
+        </div>
       </div>
 
       <Card>
