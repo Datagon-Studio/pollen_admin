@@ -73,7 +73,7 @@ export default function AccountsList() {
   return (
     <SectionPage
       title="Accounts"
-      description="Every organization account on Pollean — status, KYC, members, funds, and collected totals. Select a row to expand its details."
+      description="Organization accounts on Pollean — status, KYC, members, funds, and collected totals. Select a row to expand its details."
       phase="ready"
     >
       <div className="flex flex-col sm:flex-row gap-3">
