@@ -53,7 +53,7 @@ export const kycApi = {
 
   async getDocumentSignedUrl(filePath: string): Promise<string> {
     const response = await request<{ signedUrl: string }>(
-      `/accounts/kyc/document-url?path=${encodeURIComponent(filePath)}`,
+      `/accounts/kyc/document-url?filePath=${encodeURIComponent(filePath)}`,
       { method: "GET" }
     );
     if (!response.success || !response.data?.signedUrl) {
