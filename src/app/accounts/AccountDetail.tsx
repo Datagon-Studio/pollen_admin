@@ -12,6 +12,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { ContributionTable } from "@/components/catalog/ContributionTable";
 import { AuditLogTable } from "@/components/audit/AuditLogTable";
 import { SettlementRequestTable } from "@/components/settlements/SettlementRequestTable";
+import { RecordedSettlements } from "@/app/settlements/RecordedSettlements";
 import { adminApi } from "@/services/admin.api";
 import { useSortedRows } from "@/lib/table-sort";
 import { SortableTh } from "@/components/ui/sortable-th";
@@ -528,14 +529,23 @@ export default function AccountDetail() {
         )}
 
         {activeTab === "settlements" && (
-          <TabPanel
-            loading={settlementsLoading}
-            empty={settlementRequests.length === 0}
-            emptyLabel="No settlement requests for this account"
-            illustration="signed-document"
-          >
-            <SettlementRequestTable requests={settlementRequests} hideAccount />
-          </TabPanel>
+          <div className="space-y-8">
+            <section className="space-y-3">
+              <h2 className="text-lg font-semibold">Requests</h2>
+              <TabPanel
+                loading={settlementsLoading}
+                empty={settlementRequests.length === 0}
+                emptyLabel="No settlement requests for this account"
+                illustration="signed-document"
+              >
+                <SettlementRequestTable requests={settlementRequests} hideAccount />
+              </TabPanel>
+            </section>
+            <section className="space-y-3">
+              <h2 className="text-lg font-semibold">Recorded payouts</h2>
+              <RecordedSettlements accountId={id} />
+            </section>
+          </div>
         )}
 
         {activeTab === "audit" && (

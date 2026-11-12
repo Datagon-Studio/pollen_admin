@@ -259,6 +259,35 @@ export interface AdminSettlementRequestDetail extends AdminSettlementRequest {
   fund_disbursed: number;
 }
 
+export type FundSettlementStatus = "pending" | "successful" | "canceled";
+
+export interface AdminFundSettlement {
+  settlement_id: string;
+  account_id: string;
+  account_name: string | null;
+  fund_id: string;
+  fund_name: string;
+  recorded_by_user_id: string;
+  amount: number;
+  settlement_date: string;
+  status: FundSettlementStatus;
+  reference: string | null;
+  notes: string | null;
+  is_archived: boolean;
+  created_at: string;
+}
+
+export interface FundSettlementAvailability {
+  fund_id: string;
+  collected: number;
+  onlineCollected: number;
+  offlineCollected: number;
+  feeAmount: number;
+  feePercent: number;
+  reservedAmount: number;
+  availableAmount: number;
+}
+
 function qs(params: Record<string, string | undefined>): string {
   const search = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {
@@ -376,6 +405,92 @@ export const adminApi = {
     );
     if (!response.success || !response.data) {
       throw new Error(response.error || "Failed to load settlement request");
+    }
+    return response.data;
+  },
+
+  async listFundSettlements(params?: {
+    status?: FundSettlementStatus;
+    accountId?: string;
+    fundId?: string;
+    includeArchived?: boolean;
+  }): Promise<AdminFundSettlement[]> {
+    const response = await request<AdminFundSettlement[]>(
+      `/admin/fund-settlements${qs({
+        status: params?.status,
+        accountId: params?.accountId,
+        fundId: params?.fundId,
+        includeArchived: params?.includeArchived ? "true" : undefined,
+      })}`,
+      { method: "GET" }
+    );
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Failed to load recorded settlements");
+    }
+    return response.data;
+  },
+
+  async getFundSettlementAvailability(
+    accountId: string,
+    fundId: string
+  ): Promise<FundSettlementAvailability> {
+    const response = await request<FundSettlementAvailability>(
+      `/admin/fund-settlements/availability${qs({ accountId, fundId })}`,
+      { method: "GET" }
+    );
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Failed to load settlement availability");
+    }
+    return response.data;
+  },
+
+  async recordFundSettlement(input: {
+    account_id: string;
+    fund_id: string;
+    amount: number;
+    settlement_date: string;
+    status: "pending" | "successful";
+    reference?: string;
+    notes?: string;
+  }): Promise<AdminFundSettlement> {
+    const response = await request<AdminFundSettlement>("/admin/fund-settlements", {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Failed to record settlement");
+    }
+    return response.data;
+  },
+
+  async updateFundSettlementStatus(
+    settlementId: string,
+    input: {
+      status: "successful" | "canceled";
+      reference?: string;
+      notes?: string;
+    }
+  ): Promise<AdminFundSettlement> {
+    const response = await request<AdminFundSettlement>(
+      `/admin/fund-settlements/${settlementId}/status`,
+      {
+        method: "POST",
+        body: JSON.stringify(input),
+      }
+    );
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Failed to update settlement");
+    }
+    return response.data;
+  },
+
+  async archiveFundSettlement(settlementId: string): Promise<AdminFundSettlement> {
+    const response = await request<AdminFundSettlement>(
+      `/admin/fund-settlements/${settlementId}/archive`,
+      { method: "POST", body: JSON.stringify({}) }
+    );
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Failed to archive settlement");
     }
     return response.data;
   },

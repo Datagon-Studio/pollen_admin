@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { SectionPage } from "@/components/pages/SectionPage";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import { SortableTh } from "@/components/ui/sortable-th";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { usePagination } from "@/hooks/usePagination";
 import { EmptyState } from "@/components/ui/empty-state";
+import { RecordedSettlements } from "@/app/settlements/RecordedSettlements";
 
 const filters: Array<"all" | SettlementRequestStatus> = [
   "all",
@@ -25,6 +26,8 @@ const filters: Array<"all" | SettlementRequestStatus> = [
 ];
 
 export default function SettlementsList() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view = searchParams.get("view") === "recorded" ? "recorded" : "requests";
   const [status, setStatus] = useState<"all" | SettlementRequestStatus>("all");
   const [search, setSearch] = useState("");
   const { data = [], isLoading, error } = useQuery({
@@ -70,11 +73,36 @@ export default function SettlementsList() {
 
   return (
     <SectionPage
-      title="Settlement requests"
-      description="Review manager requests, verify payment details, and track approval through disbursement."
+      title="Settlements"
+      description={
+        view === "recorded"
+          ? "Start a payout or record one that has already been paid. Pending rows can be marked paid or canceled."
+          : "Review manager requests, verify payment details, and track approval through disbursement."
+      }
       phase="ready"
     >
       <div className="space-y-4">
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant={view === "requests" ? "default" : "outline"}
+            onClick={() => setSearchParams({}, { replace: true })}
+          >
+            Requests
+          </Button>
+          <Button
+            size="sm"
+            variant={view === "recorded" ? "default" : "outline"}
+            onClick={() => setSearchParams({ view: "recorded" }, { replace: true })}
+          >
+            Recorded
+          </Button>
+        </div>
+
+        {view === "recorded" ? (
+          <RecordedSettlements />
+        ) : (
+        <>
         <div className="flex flex-col lg:flex-row gap-3 justify-between">
           <div className="flex flex-wrap gap-2">
             {filters.map((filter) => (
@@ -174,6 +202,8 @@ export default function SettlementsList() {
           rangeEnd={pagination.rangeEnd}
           onPageChange={pagination.setPage}
         />
+        </>
+        )}
       </div>
     </SectionPage>
   );

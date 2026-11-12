@@ -12,7 +12,9 @@ type StatusType =
   | "suspended"
   | "verified"
   | "unverified"
-  | "rejected";
+  | "rejected"
+  | "successful"
+  | "canceled";
 
 interface StatusBadgeProps {
   status: StatusType;
@@ -33,6 +35,8 @@ const statusStyles: Record<StatusType, string> = {
   verified: "bg-success/15 text-success border-success/40",
   unverified: "bg-muted text-muted-foreground border-border",
   rejected: "bg-destructive/15 text-destructive border-destructive/40",
+  successful: "bg-success/15 text-success border-success/40",
+  canceled: "bg-muted text-muted-foreground border-border",
 };
 
 const statusLabels: Record<StatusType, string> = {
@@ -48,6 +52,8 @@ const statusLabels: Record<StatusType, string> = {
   verified: "Verified",
   unverified: "Unverified",
   rejected: "Rejected",
+  successful: "Successful",
+  canceled: "Canceled",
 };
 
 export function StatusBadge({ status, label, className }: StatusBadgeProps) {
