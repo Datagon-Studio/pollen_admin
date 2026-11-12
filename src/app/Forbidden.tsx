@@ -1,4 +1,4 @@
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { ShieldOff, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,12 +8,9 @@ import { useStaffRole } from "@/hooks/useStaffRole";
 
 export default function Forbidden() {
   const navigate = useNavigate();
-  const location = useLocation();
   const queryClient = useQueryClient();
   const { logout } = useAuth();
-  const { profile, role, isStaff } = useStaffRole();
-  const platformRole =
-    (location.state as { platformRole?: string } | null)?.platformRole ?? profile?.role;
+  const { role, isStaff } = useStaffRole();
 
   const handleBackToSignIn = async () => {
     await logout();
@@ -29,19 +26,7 @@ export default function Forbidden() {
             <ShieldOff className="h-5 w-5" />
             <CardTitle>Not authorized</CardTitle>
           </div>
-          <CardDescription>
-            {profile && !role
-              ? `Signed in as ${profile.email} with platform role "${platformRole}". Staff portal requires superadmin, ops, or support — group manager is "admin", which is different.`
-              : "You do not have permission to view this page."}
-          </CardDescription>
-          {profile && !role && platformRole === "admin" && (
-            <p className="text-xs text-muted-foreground mt-2">
-              Run in Supabase:{" "}
-              <code className="bg-muted px-1 rounded">
-                UPDATE users SET role = &apos;superadmin&apos; WHERE email = &apos;{profile.email}&apos;;
-              </code>
-            </p>
-          )}
+          <CardDescription>You do not have permission to view this page.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col sm:flex-row gap-2">
           <Button onClick={handleBackToSignIn} className="w-full sm:w-auto">

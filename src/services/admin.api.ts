@@ -292,7 +292,62 @@ export interface InviteStaffInput {
   portalOrigin?: string;
 }
 
+export interface AccountFeeOverride {
+  account_id: string;
+  account_name: string | null;
+  rate: number;
+  percent: number;
+}
+
+export interface PlatformFeesSnapshot {
+  globalRate: number;
+  globalPercent: number;
+  overrides: AccountFeeOverride[];
+}
+
+export interface AccountFeeUpdateResult {
+  account_id: string;
+  overrideRate: number | null;
+  overridePercent: number | null;
+  effectiveRate: number;
+  effectivePercent: number;
+  source: "account" | "global" | "default";
+}
+
 export const adminApi = {
+  async getFees(): Promise<PlatformFeesSnapshot> {
+    const response = await request<PlatformFeesSnapshot>("/admin/fees", { method: "GET" });
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Failed to load transaction fees");
+    }
+    return response.data;
+  },
+
+  async setGlobalFee(percent: number): Promise<{ rate: number; percent: number }> {
+    const response = await request<{ rate: number; percent: number }>("/admin/fees/global", {
+      method: "PUT",
+      body: JSON.stringify({ percent }),
+    });
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Failed to save global fee");
+    }
+    return response.data;
+  },
+
+  async setAccountFee(
+    accountId: string,
+    input: { percent: number } | { clear: true },
+  ): Promise<AccountFeeUpdateResult> {
+    const response = await request<AccountFeeUpdateResult>(`/admin/fees/accounts/${accountId}`, {
+      method: "PUT",
+      body: JSON.stringify(input),
+    });
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Failed to save account fee");
+    }
+    return response.data;
+  },
+
   async listSettlementRequests(params?: {
     status?: SettlementRequestStatus;
     accountId?: string;
@@ -373,6 +428,9 @@ export const adminApi = {
     dateTo?: string;
     month?: number;
     years?: number[];
+    accountId?: string;
+    channel?: "offline" | "online";
+    status?: string;
   }): Promise<PlatformReport> {
     const response = await request<PlatformReport>(
       `/admin/reports${qs({
@@ -381,6 +439,9 @@ export const adminApi = {
         dateTo: params.dateTo,
         month: params.month ? String(params.month) : undefined,
         years: params.years?.length ? params.years.join(",") : undefined,
+        accountId: params.accountId,
+        channel: params.channel,
+        status: params.status,
       })}`,
       { method: "GET" }
     );

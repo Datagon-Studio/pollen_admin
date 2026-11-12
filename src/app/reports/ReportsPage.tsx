@@ -82,11 +82,27 @@ export default function ReportsPage() {
   const [accountFilter, setAccountFilter] = useState("all");
   const [channelFilter, setChannelFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const params = reportParams(applied);
+  const periodParams = reportParams(applied);
+  const params = {
+    ...periodParams,
+    accountId: accountFilter !== "all" ? accountFilter : undefined,
+    channel:
+      channelFilter === "online" || channelFilter === "offline"
+        ? (channelFilter as "online" | "offline")
+        : undefined,
+    status: statusFilter !== "all" ? statusFilter : undefined,
+  };
+
+  const { data: accounts = [] } = useQuery({
+    queryKey: ["admin-accounts"],
+    queryFn: () => adminApi.listAccounts(),
+    staleTime: 5 * 60 * 1000,
+  });
 
   const { data, isLoading, error, isFetching } = useQuery({
     queryKey: ["admin-report", params],
     queryFn: () => adminApi.getReport(params),
+    placeholderData: keepPreviousData,
   });
   const {
     data: trend,
@@ -100,25 +116,21 @@ export default function ReportsPage() {
   });
   const trendLabel = TREND_RANGES.find((option) => option.id === trendRange)?.label ?? "the selected range";
 
-  const accountOptions = useMemo(() => {
-    const names = new Map<string, string>();
-    for (const row of data?.records ?? []) {
-      if (!names.has(row.account_id)) {
-        names.set(row.account_id, row.account_name || "Unnamed account");
-      }
-    }
-    return [...names.entries()]
-      .map(([id, name]) => ({ id, name }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [data?.records]);
+  const accountOptions = useMemo(
+    () =>
+      accounts
+        .map((account) => ({
+          id: account.account_id,
+          name: account.account_name || "Unnamed account",
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [accounts],
+  );
 
   const filteredRecords = useMemo(() => {
     const query = search.trim().toLowerCase();
+    if (!query) return data?.records ?? [];
     return (data?.records ?? []).filter((row) => {
-      if (accountFilter !== "all" && row.account_id !== accountFilter) return false;
-      if (channelFilter !== "all" && row.channel !== channelFilter) return false;
-      if (statusFilter !== "all" && row.status !== statusFilter) return false;
-      if (!query) return true;
       const haystack = [
         row.member_name ?? "",
         row.payment_reference ?? "",
@@ -129,16 +141,12 @@ export default function ReportsPage() {
         .toLowerCase();
       return haystack.includes(query);
     });
-  }, [data?.records, search, accountFilter, channelFilter, statusFilter]);
+  }, [data?.records, search]);
 
-  const hasRecordFilters =
-    search.trim() !== "" ||
-    accountFilter !== "all" ||
-    channelFilter !== "all" ||
-    statusFilter !== "all";
+  const hasCardFilters =
+    accountFilter !== "all" || channelFilter !== "all" || statusFilter !== "all";
 
-  const clearRecordFilters = () => {
-    setSearch("");
+  const clearCardFilters = () => {
     setAccountFilter("all");
     setChannelFilter("all");
     setStatusFilter("all");
@@ -150,15 +158,60 @@ export default function ReportsPage() {
       description="Platform collections and the contribution records inside a chosen period."
       phase="ready"
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">{showingText(applied)}</p>
-        <div className="flex items-center gap-2">
-          {isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-          <ReportPeriodPicker applied={applied} onApply={setApplied} />
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">{showingText(applied)}</p>
+          <div className="flex items-center gap-2">
+            {isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+            <ReportPeriodPicker applied={applied} onApply={setApplied} />
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-3">
+          <select
+            aria-label="Filter by account"
+            className={SELECT_CLASS}
+            value={accountFilter}
+            onChange={(event) => setAccountFilter(event.target.value)}
+          >
+            <option value="all">All accounts</option>
+            {accountOptions.map((account) => (
+              <option key={account.id} value={account.id}>
+                {account.name}
+              </option>
+            ))}
+          </select>
+          <select
+            aria-label="Filter by channel"
+            className={SELECT_CLASS}
+            value={channelFilter}
+            onChange={(event) => setChannelFilter(event.target.value)}
+          >
+            <option value="all">All channels</option>
+            <option value="online">Online</option>
+            <option value="offline">Manual</option>
+          </select>
+          <select
+            aria-label="Filter by status"
+            className={SELECT_CLASS}
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+          >
+            <option value="all">All statuses</option>
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="failed">Failed</option>
+            <option value="reversed">Reversed</option>
+          </select>
+          {hasCardFilters && (
+            <Button type="button" variant="ghost" onClick={clearCardFilters}>
+              Clear filters
+            </Button>
+          )}
         </div>
       </div>
 
-      {isLoading && (
+      {isLoading && !data && (
         <div className="flex justify-center py-16">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
@@ -181,7 +234,7 @@ export default function ReportsPage() {
             <StatCard title="Expenses" value={formatCurrency(data.summary.expenses)} icon={Receipt} />
             <StatCard title="Net" value={formatCurrency(data.summary.net)} icon={Scale} />
             <StatCard
-              title="Confirmed contributions"
+              title={statusFilter === "all" ? "Confirmed contributions" : "Contributions"}
               value={String(data.summary.contributionCount)}
               icon={ListChecks}
             />
@@ -344,66 +397,22 @@ export default function ReportsPage() {
             </CardHeader>
             {recordsOpen && (
               <CardContent id="report-records" className="space-y-3">
-                <div className="flex flex-col gap-3">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      placeholder="Search member, reference, account, fund…"
-                      value={search}
-                      onChange={(event) => setSearch(event.target.value)}
-                      className="pl-9"
-                    />
-                  </div>
-                  <div className="flex flex-wrap gap-3">
-                    <select
-                      aria-label="Filter by account"
-                      className={SELECT_CLASS}
-                      value={accountFilter}
-                      onChange={(event) => setAccountFilter(event.target.value)}
-                    >
-                      <option value="all">All accounts</option>
-                      {accountOptions.map((account) => (
-                        <option key={account.id} value={account.id}>
-                          {account.name}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      aria-label="Filter by channel"
-                      className={SELECT_CLASS}
-                      value={channelFilter}
-                      onChange={(event) => setChannelFilter(event.target.value)}
-                    >
-                      <option value="all">All channels</option>
-                      <option value="online">Online</option>
-                      <option value="offline">Manual</option>
-                    </select>
-                    <select
-                      aria-label="Filter by status"
-                      className={SELECT_CLASS}
-                      value={statusFilter}
-                      onChange={(event) => setStatusFilter(event.target.value)}
-                    >
-                      <option value="all">All statuses</option>
-                      <option value="pending">Pending</option>
-                      <option value="confirmed">Confirmed</option>
-                      <option value="failed">Failed</option>
-                      <option value="reversed">Reversed</option>
-                    </select>
-                    {hasRecordFilters && (
-                      <Button type="button" variant="ghost" onClick={clearRecordFilters}>
-                        Clear
-                      </Button>
-                    )}
-                  </div>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search member, reference, account, fund…"
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    className="pl-9"
+                  />
                 </div>
-                <p className="text-sm text-muted-foreground">{recordSummary(data, filteredRecords)}</p>
+                <p className="text-sm text-muted-foreground">{recordSummary(data, filteredRecords, search)}</p>
                 <ContributionTable
                   rows={filteredRecords}
                   showAccount
                   emptyMessage={
-                    hasRecordFilters
-                      ? "No records match these filters."
+                    search.trim()
+                      ? "No records match this search."
                       : "No contribution records in this period."
                   }
                   emptyIllustration="file-searching"
@@ -420,9 +429,10 @@ export default function ReportsPage() {
 function recordSummary(
   data: { recordCount: number; recordsLimited: boolean; records: AdminContributionRow[] },
   filtered: AdminContributionRow[],
+  search: string,
 ): string {
   if (data.recordCount === 0) return "No contribution records in this period.";
-  if (filtered.length !== data.records.length) {
+  if (search.trim() && filtered.length !== data.records.length) {
     return `Showing ${filtered.length} of ${data.records.length} loaded records.`;
   }
   if (data.recordsLimited) {

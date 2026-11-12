@@ -21,6 +21,7 @@ import SettlementDetail from "@/app/settlements/SettlementDetail";
 import KycQueue from "@/app/kyc/KycQueue";
 import KycDetail from "@/app/kyc/KycDetail";
 import StaffManagement from "@/app/settings/StaffManagement";
+import FeesSettings from "@/app/settings/FeesSettings";
 import ReportsPage from "@/app/reports/ReportsPage";
 import AuditLogViewer from "@/app/audit/AuditLogViewer";
 import ProfilePage from "@/app/profile/ProfilePage";
@@ -179,6 +180,16 @@ export default function App() {
               <StaffRoute requirePlatformAdmin>
                 <AdminLayout>
                   <StaffManagement />
+                </AdminLayout>
+              </StaffRoute>
+            }
+          />
+          <Route
+            path="/settings/fees"
+            element={
+              <StaffRoute requirePlatformAdmin>
+                <AdminLayout>
+                  <FeesSettings />
                 </AdminLayout>
               </StaffRoute>
             }

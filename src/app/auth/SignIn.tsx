@@ -1,20 +1,26 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { request } from "@/lib/api-client";
 import { useAuth } from "@/hooks/useAuth";
+import { isStaffRole } from "@/lib/staff-roles";
+import { userApi } from "@/services/user.api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
+const GENERIC_AUTH_ERROR = "Invalid email or password.";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [searchParams] = useSearchParams();
-  const [error, setError] = useState("");
+  const location = useLocation();
+  const locationError = (location.state as { authError?: string } | null)?.authError;
+  const [error, setError] = useState(locationError || "");
   const [notice, setNotice] = useState(
     searchParams.get("reset") === "updated"
       ? "Your password has been updated. Sign in with the new password."
@@ -23,13 +29,21 @@ export default function SignIn() {
   const [loading, setLoading] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, logout } = useAuth();
 
   useEffect(() => {
-    if (!authLoading && user) {
+    if (locationError) {
+      setError(locationError);
+      navigate(location.pathname + location.search, { replace: true, state: {} });
+    }
+  }, [locationError, location.pathname, location.search, navigate]);
+
+  useEffect(() => {
+    // Skip while a sign-in attempt is verifying staff access.
+    if (!authLoading && user && !loading) {
       navigate("/", { replace: true });
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, loading, navigate]);
 
   const handleForgotPassword = async () => {
     setError("");
@@ -62,22 +76,42 @@ export default function SignIn() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setNotice("");
     setLoading(true);
     try {
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
-      if (signInError) throw signInError;
+      if (signInError) {
+        setError(GENERIC_AUTH_ERROR);
+        return;
+      }
 
       // Wait for session before routing (avoids bounce back to /signin)
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        throw new Error("Sign in succeeded but no session was created. Try again.");
+        setError(GENERIC_AUTH_ERROR);
+        await logout();
+        return;
       }
+
+      try {
+        const profile = await userApi.getProfile();
+        if (!isStaffRole(profile.role)) {
+          await logout();
+          setError(GENERIC_AUTH_ERROR);
+          return;
+        }
+      } catch {
+        await logout();
+        setError(GENERIC_AUTH_ERROR);
+        return;
+      }
+
       navigate("/", { replace: true });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Sign in failed");
+    } catch {
+      setError(GENERIC_AUTH_ERROR);
     } finally {
       setLoading(false);
     }

@@ -50,7 +50,8 @@ export type PortalPageId =
   | "audit"
   | "settlements"
   | "kyc"
-  | "staff";
+  | "staff"
+  | "fees";
 
 export const PORTAL_PAGES: { id: PortalPageId; label: string }[] = [
   { id: "dashboard", label: "Dashboard" },
@@ -63,6 +64,7 @@ export const PORTAL_PAGES: { id: PortalPageId; label: string }[] = [
   { id: "settlements", label: "Settlements" },
   { id: "kyc", label: "KYC" },
   { id: "staff", label: "Staff" },
+  { id: "fees", label: "Fees" },
 ];
 
 const READ_PAGES: PortalPageId[] = [
@@ -79,7 +81,7 @@ const READ_PAGES: PortalPageId[] = [
 export function templatePages(role: StaffRole): PortalPageId[] {
   if (role === "support") return [...READ_PAGES];
   if (role === "ops") return [...READ_PAGES, "settlements", "kyc"];
-  return [...READ_PAGES, "settlements", "kyc", "staff"];
+  return [...READ_PAGES, "settlements", "kyc", "staff", "fees"];
 }
 
 export function pagesMatchTemplate(role: StaffRole, pages: readonly PortalPageId[]): boolean {

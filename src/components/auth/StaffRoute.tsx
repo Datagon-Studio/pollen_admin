@@ -1,4 +1,6 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
+import { useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useStaffRole } from "@/hooks/useStaffRole";
 import type { StaffRole } from "@/lib/staff-roles";
@@ -21,10 +23,47 @@ export function StaffRoute({
   requirePlatformAdmin = false,
   allowedRoles,
 }: StaffRouteProps) {
-  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { user, loading: authLoading, logout } = useAuth();
   const { role, isStaff, loading: roleLoading, error: profileError, profile } = useStaffRole();
+  const rejectingRef = useRef(false);
 
-  if (authLoading || roleLoading) {
+  // Non-staff accounts (e.g. group admin) should fail like a normal sign-in, not a debug page.
+  useEffect(() => {
+    if (authLoading || roleLoading || !user || profileError) return;
+    if (isStaff && role) return;
+    if (rejectingRef.current) return;
+
+    rejectingRef.current = true;
+    let cancelled = false;
+    (async () => {
+      await logout();
+      queryClient.clear();
+      if (!cancelled) {
+        navigate("/signin", {
+          replace: true,
+          state: { authError: "Invalid email or password." },
+        });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    authLoading,
+    roleLoading,
+    user,
+    profileError,
+    isStaff,
+    role,
+    logout,
+    queryClient,
+    navigate,
+  ]);
+
+  if (authLoading || roleLoading || (user && !profileError && !isStaff)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <p className="text-muted-foreground text-sm">Loading…</p>
@@ -45,7 +84,11 @@ export function StaffRoute({
   }
 
   if (!isStaff || !role) {
-    return <Navigate to="/forbidden" replace state={{ platformRole: profile?.role }} />;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-muted-foreground text-sm">Signing out…</p>
+      </div>
+    );
   }
 
   if (requirePlatformAdmin && !canManagePlatform(role)) {

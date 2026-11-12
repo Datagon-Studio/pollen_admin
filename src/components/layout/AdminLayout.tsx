@@ -9,6 +9,7 @@ import {
   Landmark,
   ShieldCheck,
   Settings,
+  Percent,
   LogOut,
   Menu,
   X,
@@ -46,6 +47,7 @@ const navItems: NavItem[] = [
   { label: "Settlements", href: "/settlements", icon: Landmark, complianceOnly: true },
   { label: "KYC", href: "/kyc", icon: ShieldCheck, complianceOnly: true },
   { label: "Staff", href: "/settings/staff", icon: Settings, platformAdminOnly: true },
+  { label: "Fees", href: "/settings/fees", icon: Percent, platformAdminOnly: true },
   { label: "Profile", href: "/profile", icon: UserRound },
 ];
 
