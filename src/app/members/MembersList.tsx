@@ -22,6 +22,7 @@ const SELECT_CLASS =
 
 const MEMBER_EXPORT_COLUMNS: ExportColumn<AdminMemberSummary>[] = [
   { header: "Name", value: (m) => m.full_name },
+  { header: "Membership #", value: (m) => m.membership_number || "" },
   { header: "Phone", value: (m) => m.phone },
   { header: "Email", value: (m) => m.email || "" },
   { header: "Account", value: (m) => m.account_name || "Unnamed" },
@@ -76,6 +77,8 @@ export default function MembersList() {
     switch (column) {
       case "name":
         return member.full_name;
+      case "membership":
+        return member.membership_number || "";
       case "contact":
         return member.email ? `${member.phone} ${member.email}` : member.phone;
       case "account":
@@ -220,6 +223,7 @@ export default function MembersList() {
               <thead className="bg-muted/50 border-b">
                 <tr>
                   <SortableTh label="Name" column="name" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
+                  <SortableTh label="Membership #" column="membership" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
                   <SortableTh label="Contact" column="contact" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
                   <SortableTh label="Account" column="account" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
                   <SortableTh label="Also in" column="also" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
@@ -231,7 +235,7 @@ export default function MembersList() {
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-6">
+                    <td colSpan={8} className="p-6">
                       <EmptyState
                         illustration={hasActiveFilters ? "file-searching" : "collaboration"}
                         size="table"
@@ -256,6 +260,9 @@ export default function MembersList() {
                         >
                           {m.full_name}
                         </Link>
+                      </td>
+                      <td className="p-3 text-muted-foreground whitespace-nowrap">
+                        {m.membership_number || "—"}
                       </td>
                       <td className="p-3 text-muted-foreground">
                         <div>{m.phone}</div>

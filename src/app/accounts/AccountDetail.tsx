@@ -88,6 +88,8 @@ export default function AccountDetail() {
     switch (column) {
       case "name":
         return member.full_name;
+      case "membership":
+        return member.membership_number || "";
       case "phone":
         return member.phone;
       case "status":
@@ -337,6 +339,7 @@ export default function AccountDetail() {
                 <thead className="bg-muted/50 border-b">
                   <tr>
                     <SortableTh label="Name" column="name" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
+                    <SortableTh label="Membership #" column="membership" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
                     <SortableTh label="Phone" column="phone" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
                     <SortableTh label="Status" column="status" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
                     <SortableTh label="Contributions (GHS)" column="contributions" align="right" sortColumn={memberSort.sortColumn} sortDirection={memberSort.sortDirection} onSort={memberSort.onSort} />
@@ -349,6 +352,9 @@ export default function AccountDetail() {
                         <Link to={`/members/${m.member_id}`} className="font-medium hover:underline">
                           {m.full_name}
                         </Link>
+                      </td>
+                      <td className="p-3 text-muted-foreground whitespace-nowrap">
+                        {m.membership_number || "—"}
                       </td>
                       <td className="p-3 text-muted-foreground">{m.phone}</td>
                       <td className="p-3">
