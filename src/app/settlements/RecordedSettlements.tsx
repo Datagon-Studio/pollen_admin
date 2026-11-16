@@ -357,17 +357,48 @@ export function RecordedSettlements({ accountId }: RecordedSettlementsProps) {
               {availability && (
                 <>
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Confirmed in fund</span>
+                    <span>Collected in fund</span>
                     <span>{formatMoney(availability.collected)}</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Already reserved</span>
+                    <span>Already settled</span>
                     <span>{formatMoney(availability.reservedAmount)}</span>
                   </div>
+                  {availability.feePercent > 0 && (
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Transaction fee ({availability.feePercent}%)</span>
+                      <span>
+                        {formatMoney(
+                          Number(amount) > 0
+                            ? Math.round(Number(amount) * (availability.feePercent / 100) * 100) / 100
+                            : 0
+                        )}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between font-medium pt-1 border-t">
                     <span>Maximum withdrawable</span>
                     <span>{formatMoney(availability.availableAmount)}</span>
                   </div>
+                  {Number(amount) > 0 && availability.feePercent > 0 && (
+                    <div className="flex justify-between font-medium">
+                      <span>Amount to be settled</span>
+                      <span>
+                        {formatMoney(
+                          Math.round(
+                            (Number(amount) -
+                              Number(amount) * (availability.feePercent / 100)) *
+                              100
+                          ) / 100
+                        )}
+                      </span>
+                    </div>
+                  )}
+                  {availability.feePercent > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Transaction fees are deducted from the amount requested.
+                    </p>
+                  )}
                   {availability.availableAmount > 0 && (
                     <Button
                       type="button"
