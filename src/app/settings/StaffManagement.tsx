@@ -25,6 +25,8 @@ import {
 import { useSortedRows } from "@/lib/table-sort";
 import { cn } from "@/lib/utils";
 import { adminApi, type AdminStaffMember } from "@/services/admin.api";
+import { TableExportMenu } from "@/components/export/TableExportMenu";
+import type { ExportColumn } from "@/lib/export";
 
 type PortalStatus = "active" | "invited" | "revoked";
 
@@ -39,6 +41,19 @@ type StaffMember = {
   status: PortalStatus;
   lastSignIn: string | null;
 };
+
+const STAFF_EXPORT_COLUMNS: ExportColumn<StaffMember>[] = [
+  { header: "Name", value: (m) => m.fullName || "—" },
+  { header: "Email", value: (m) => m.email },
+  { header: "Role", value: (m) => staffRoleLabel(m.role) },
+  { header: "Access", value: (m) => accessSummary(m.role, m.pages) },
+  {
+    header: "Last sign-in",
+    value: (m) => (m.lastSignIn ? formatDate(m.lastSignIn) : "—"),
+  },
+  { header: "Status", value: (m) => m.status },
+];
+
 
 type DialogState =
   | { type: "closed" }
@@ -358,10 +373,20 @@ export default function StaffManagement() {
       description="Invite ops, support, and other super admins. Access follows the role. Super admin only."
       badge={null}
       actions={
-        <Button type="button" onClick={openInvite}>
-          <UserPlus className="h-4 w-4" aria-hidden="true" />
-          Invite staff
-        </Button>
+        <>
+          <TableExportMenu
+            filename="staff-roster"
+            title="Staff roster"
+            sheetName="Staff"
+            columns={STAFF_EXPORT_COLUMNS}
+            rows={staffSort.sorted}
+            disabled={staffQuery.isLoading || staffQuery.isError}
+          />
+          <Button type="button" onClick={openInvite}>
+            <UserPlus className="h-4 w-4" aria-hidden="true" />
+            Invite staff
+          </Button>
+        </>
       }
     >
       <p className="text-sm text-muted-foreground">

@@ -14,9 +14,23 @@ import { TablePagination } from "@/components/ui/table-pagination";
 import { usePagination } from "@/hooks/usePagination";
 import { formatAmount, formatDate } from "@/lib/format";
 import { EmptyState } from "@/components/ui/empty-state";
+import { TableExportMenu } from "@/components/export/TableExportMenu";
+import type { ExportColumn } from "@/lib/export";
 
 const SELECT_CLASS =
   "h-10 rounded-md border border-input bg-background px-3 text-sm min-w-[10.5rem]";
+
+const CONTRIBUTION_EXPORT_COLUMNS: ExportColumn<AdminContributionRow>[] = [
+  { header: "Date", value: (c) => formatDate(c.date_received) },
+  { header: "Member", value: (c) => c.member_name || "Anonymous" },
+  { header: "Account", value: (c) => c.account_name || "Unnamed" },
+  { header: "Fund", value: (c) => c.fund_name || "Fund" },
+  { header: "Amount (GHS)", value: (c) => formatAmount(c.amount) },
+  { header: "Channel", value: (c) => (c.channel === "online" ? "Online" : "Manual") },
+  { header: "Status", value: (c) => c.status },
+  { header: "Reference", value: (c) => c.payment_reference || "" },
+];
+
 
 export default function ContributionsList() {
   const [search, setSearch] = useState("");
@@ -240,6 +254,17 @@ export default function ContributionsList() {
               Clear filters
             </Button>
           )}
+          <div className="ml-auto">
+            <TableExportMenu
+              filename="contributions"
+              title="Contributions"
+              subtitle={`Showing ${filtered.length} of ${contributions.length} rows (latest 500 from server)`}
+              sheetName="Contributions"
+              columns={CONTRIBUTION_EXPORT_COLUMNS}
+              rows={contributionSort.sorted}
+              disabled={isLoading || !!error}
+            />
+          </div>
         </div>
       </div>
 

@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import {
   adminApi,
   SettlementRequestStatus,
+  type AdminSettlementRequest,
 } from "@/services/admin.api";
 import { formatAmount, formatDate } from "@/lib/format";
 import { useSortedRows } from "@/lib/table-sort";
@@ -16,6 +17,8 @@ import { TablePagination } from "@/components/ui/table-pagination";
 import { usePagination } from "@/hooks/usePagination";
 import { EmptyState } from "@/components/ui/empty-state";
 import { RecordedSettlements } from "@/app/settlements/RecordedSettlements";
+import { TableExportMenu } from "@/components/export/TableExportMenu";
+import type { ExportColumn } from "@/lib/export";
 
 const filters: Array<"all" | SettlementRequestStatus> = [
   "all",
@@ -24,6 +27,24 @@ const filters: Array<"all" | SettlementRequestStatus> = [
   "rejected",
   "disbursed",
 ];
+
+const SETTLEMENT_REQUEST_EXPORT_COLUMNS: ExportColumn<AdminSettlementRequest>[] = [
+  { header: "Requested", value: (r) => formatDate(r.created_at) },
+  { header: "Account", value: (r) => r.account_name },
+  { header: "Fund", value: (r) => r.fund_name },
+  {
+    header: "Requester",
+    value: (r) => r.requester_name || r.requester_email || "Unknown",
+  },
+  { header: "Amount (GHS)", value: (r) => formatAmount(Number(r.amount)) },
+  {
+    header: "Payment details",
+    value: (r) =>
+      `${r.destination_account_name} · ${r.destination_bank_name || r.destination_provider} · ••••${r.destination_account_number.slice(-4)}`,
+  },
+  { header: "Status", value: (r) => r.status },
+];
+
 
 export default function SettlementsList() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -117,12 +138,23 @@ export default function SettlementsList() {
               </Button>
             ))}
           </div>
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search account, fund, or requester"
-            className="w-full lg:w-80"
-          />
+          <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search account, fund, or requester"
+              className="w-full lg:w-80"
+            />
+            <TableExportMenu
+              filename="settlement-requests"
+              title="Settlement requests"
+              subtitle={`Status: ${status}${search.trim() ? ` · Search: ${search.trim()}` : ""}`}
+              sheetName="Requests"
+              columns={SETTLEMENT_REQUEST_EXPORT_COLUMNS}
+              rows={requestSort.sorted}
+              disabled={isLoading || !!error}
+            />
+          </div>
         </div>
 
         <div className="rounded-lg border bg-card overflow-x-auto">

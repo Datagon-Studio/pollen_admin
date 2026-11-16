@@ -14,10 +14,24 @@ import { formatDate } from "@/lib/format";
 import {
   adminApi,
   FundSettlementStatus,
+  type AdminFundSettlement,
 } from "@/services/admin.api";
+import { TableExportMenu } from "@/components/export/TableExportMenu";
+import type { ExportColumn } from "@/lib/export";
 
 const fieldClass =
   "h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+
+const RECORDED_SETTLEMENT_EXPORT_COLUMNS: ExportColumn<AdminFundSettlement>[] = [
+  { header: "Date", value: (r) => formatDate(r.settlement_date) },
+  { header: "Account", value: (r) => r.account_name || "Unnamed" },
+  { header: "Fund", value: (r) => r.fund_name },
+  { header: "Amount (GHS)", value: (r) => formatMoney(Number(r.amount)) },
+  { header: "Reference", value: (r) => r.reference || "" },
+  { header: "Notes", value: (r) => r.notes || "" },
+  { header: "Status", value: (r) => r.status },
+];
+
 
 const statusFilters: Array<"all" | FundSettlementStatus> = [
   "all",
@@ -232,12 +246,25 @@ export function RecordedSettlements({ accountId }: RecordedSettlementsProps) {
             </Button>
           ))}
         </div>
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder={accountId ? "Search fund or reference" : "Search account, fund, or reference"}
             className="w-full sm:w-72"
+          />
+          <TableExportMenu
+            filename={accountId ? "account-recorded-settlements" : "recorded-settlements"}
+            title="Recorded settlements"
+            subtitle={`Status: ${status}${search.trim() ? ` · Search: ${search.trim()}` : ""}`}
+            sheetName="Recorded"
+            columns={
+              accountId
+                ? RECORDED_SETTLEMENT_EXPORT_COLUMNS.filter((c) => c.header !== "Account")
+                : RECORDED_SETTLEMENT_EXPORT_COLUMNS
+            }
+            rows={rowSort.sorted}
+            disabled={isLoading || !!error}
           />
           {canMutateCompliance && (
             <Button

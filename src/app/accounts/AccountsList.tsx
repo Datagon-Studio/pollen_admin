@@ -17,8 +17,23 @@ import { TablePagination } from "@/components/ui/table-pagination";
 import { usePagination } from "@/hooks/usePagination";
 import { formatAmount, formatCurrency, formatDate } from "@/lib/format";
 import { EmptyState } from "@/components/ui/empty-state";
+import { TableExportMenu } from "@/components/export/TableExportMenu";
+import type { ExportColumn } from "@/lib/export";
 
 const COLUMN_COUNT = 8;
+
+const ACCOUNT_EXPORT_COLUMNS: ExportColumn<AdminAccountSummary>[] = [
+  { header: "Account", value: (a) => a.account_name || "Unnamed account" },
+  { header: "Account ID", value: (a) => a.account_id },
+  { header: "Status", value: (a) => a.status },
+  { header: "KYC", value: (a) => a.kyc_status },
+  { header: "Members", value: (a) => a.member_count },
+  { header: "Active funds", value: (a) => a.active_fund_count },
+  { header: "Total funds", value: (a) => a.fund_count },
+  { header: "Collected (GHS)", value: (a) => formatAmount(a.total_collected) },
+  { header: "Created", value: (a) => formatDate(a.created_at) },
+];
+
 
 export default function AccountsList() {
   const [search, setSearch] = useState("");
@@ -107,6 +122,15 @@ export default function AccountsList() {
           <option value="verified">Verified</option>
           <option value="rejected">Rejected</option>
         </select>
+        <TableExportMenu
+          filename="accounts"
+          title="Accounts"
+          subtitle={`Showing ${filtered.length} of ${accounts.length} accounts`}
+          sheetName="Accounts"
+          columns={ACCOUNT_EXPORT_COLUMNS}
+          rows={accountSort.sorted}
+          disabled={isLoading || !!error}
+        />
       </div>
 
       {isLoading && (

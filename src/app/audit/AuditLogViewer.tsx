@@ -6,10 +6,34 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { AuditLogTable } from "@/components/audit/AuditLogTable";
+import { TableExportMenu } from "@/components/export/TableExportMenu";
 import { adminApi, type AuditLogEntry } from "@/services/admin.api";
+import { formatDate } from "@/lib/format";
+import type { ExportColumn } from "@/lib/export";
 
 const SELECT_CLASS =
   "h-10 rounded-md border border-input bg-background px-3 text-sm min-w-[10.5rem]";
+
+const AUDIT_EXPORT_COLUMNS: ExportColumn<AuditLogEntry & { account_label?: string }>[] = [
+  { header: "When", value: (log) => formatDate(log.created_at) },
+  { header: "Category", value: (log) => log.action_category },
+  { header: "Action", value: (log) => log.action_type },
+  {
+    header: "Account",
+    value: (log) =>
+      log.account_id
+        ? log.account_label || log.account_id
+        : "Platform-wide",
+  },
+  { header: "Status", value: (log) => log.status },
+  {
+    header: "Details",
+    value: (log) =>
+      log.error_message ||
+      (log.action_details ? JSON.stringify(log.action_details) : ""),
+  },
+];
+
 
 const categories = [
   { value: "all", label: "All categories" },
@@ -163,6 +187,22 @@ export default function AuditLogViewer() {
               Clear filters
             </Button>
           )}
+          <div className="ml-auto">
+            <TableExportMenu
+              filename="audit-log"
+              title="Audit log"
+              subtitle={`Showing ${filtered.length} of ${logs.length} events (latest 100)`}
+              sheetName="Audit"
+              columns={AUDIT_EXPORT_COLUMNS}
+              rows={filtered.map((log) => ({
+                ...log,
+                account_label: log.account_id
+                  ? accountNames.get(log.account_id) ?? undefined
+                  : undefined,
+              }))}
+              disabled={isLoading || !!error}
+            />
+          </div>
         </div>
       </div>
 

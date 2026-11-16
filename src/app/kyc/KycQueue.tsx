@@ -25,6 +25,18 @@ import { TablePagination } from "@/components/ui/table-pagination";
 import { usePagination } from "@/hooks/usePagination";
 import { formatDate } from "@/lib/format";
 import { EmptyState } from "@/components/ui/empty-state";
+import { TableExportMenu } from "@/components/export/TableExportMenu";
+import type { ExportColumn } from "@/lib/export";
+import type { KYCWithAccount } from "@/services/kyc.api";
+
+const KYC_EXPORT_COLUMNS: ExportColumn<KYCWithAccount>[] = [
+  { header: "Account", value: (k) => k.account_name || "Unnamed account" },
+  { header: "Official name", value: (k) => k.official_name },
+  { header: "Type", value: (k) => k.account_type },
+  { header: "Status", value: (k) => k.account_kyc_status || "unverified" },
+  { header: "Submitted", value: (k) => formatDate(k.created_at) },
+  { header: "Account ID", value: (k) => k.account_id },
+];
 
 export default function KycQueue() {
   const queryClient = useQueryClient();
@@ -154,36 +166,47 @@ export default function KycQueue() {
         <p className="text-sm text-destructive mb-4">{actionError}</p>
       )}
 
-      <div className="grid md:grid-cols-3 gap-4 mb-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search account or official name…"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
+      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center">
+        <div className="grid flex-1 gap-4 md:grid-cols-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search account or official name…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <select
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="all">All statuses</option>
+            <option value="unverified">Unverified</option>
+            <option value="pending">Pending</option>
+            <option value="verified">Verified</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <select
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+          >
+            <option value="all">All types</option>
+            <option value="business">Business</option>
+            <option value="individual">Individual</option>
+          </select>
         </div>
-        <select
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        >
-          <option value="all">All statuses</option>
-          <option value="unverified">Unverified</option>
-          <option value="pending">Pending</option>
-          <option value="verified">Verified</option>
-          <option value="rejected">Rejected</option>
-        </select>
-        <select
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
-        >
-          <option value="all">All types</option>
-          <option value="business">Business</option>
-          <option value="individual">Individual</option>
-        </select>
+        <TableExportMenu
+          filename="kyc-queue"
+          title="KYC queue"
+          subtitle={`Showing ${filteredKYC.length} of ${kycList.length} submissions`}
+          sheetName="KYC"
+          columns={KYC_EXPORT_COLUMNS}
+          rows={kycSort.sorted}
+          disabled={!!error}
+        />
       </div>
 
       <p className="text-sm text-muted-foreground mb-4">

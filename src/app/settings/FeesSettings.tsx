@@ -7,9 +7,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { EmptyState } from "@/components/ui/empty-state";
-import { adminApi } from "@/services/admin.api";
+import { TableExportMenu } from "@/components/export/TableExportMenu";
+import { adminApi, type AccountFeeOverride } from "@/services/admin.api";
+import type { ExportColumn } from "@/lib/export";
 
 const FEES_QUERY_KEY = ["admin-fees"] as const;
+
+const FEE_OVERRIDE_EXPORT_COLUMNS: ExportColumn<AccountFeeOverride>[] = [
+  { header: "Account", value: (row) => row.account_name || "Unnamed account" },
+  { header: "Account ID", value: (row) => row.account_id },
+  { header: "Fee %", value: (row) => row.percent },
+];
+
 const fieldClass =
   "h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
@@ -240,11 +249,21 @@ export default function FeesSettings() {
           </Card>
 
           <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="text-base">Account overrides</CardTitle>
-              <CardDescription>
-                These accounts charge a custom fee instead of the global {data.globalPercent}%.
-              </CardDescription>
+            <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
+              <div className="space-y-1.5">
+                <CardTitle className="text-base">Account overrides</CardTitle>
+                <CardDescription>
+                  These accounts charge a custom fee instead of the global {data.globalPercent}%.
+                </CardDescription>
+              </div>
+              <TableExportMenu
+                filename="fee-overrides"
+                title="Fee overrides"
+                subtitle={`Global fee ${data.globalPercent}%`}
+                sheetName="Overrides"
+                columns={FEE_OVERRIDE_EXPORT_COLUMNS}
+                rows={data.overrides}
+              />
             </CardHeader>
             <CardContent>
               {data.overrides.length === 0 ? (

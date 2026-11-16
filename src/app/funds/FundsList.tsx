@@ -14,9 +14,25 @@ import { TablePagination } from "@/components/ui/table-pagination";
 import { usePagination } from "@/hooks/usePagination";
 import { formatAmount, formatDate } from "@/lib/format";
 import { EmptyState } from "@/components/ui/empty-state";
+import { TableExportMenu } from "@/components/export/TableExportMenu";
+import type { ExportColumn } from "@/lib/export";
 
 const SELECT_CLASS =
   "h-10 rounded-md border border-input bg-background px-3 text-sm min-w-[10.5rem]";
+
+const FUND_EXPORT_COLUMNS: ExportColumn<AdminFundSummary>[] = [
+  { header: "Fund", value: (f) => f.fund_name },
+  { header: "Account", value: (f) => f.account_name || "Unnamed" },
+  { header: "Collected (GHS)", value: (f) => formatAmount(f.amount_collected) },
+  {
+    header: "Goal (GHS)",
+    value: (f) => (f.fund_goal != null ? formatAmount(f.fund_goal) : "—"),
+  },
+  { header: "Visibility", value: (f) => (f.is_public ? "Public" : "Private") },
+  { header: "Status", value: (f) => (f.is_active ? "Active" : "Inactive") },
+  { header: "Created", value: (f) => formatDate(f.created_at) },
+];
+
 
 export default function FundsList() {
   const [search, setSearch] = useState("");
@@ -189,6 +205,17 @@ export default function FundsList() {
               Clear filters
             </Button>
           )}
+          <div className="ml-auto">
+            <TableExportMenu
+              filename="funds"
+              title="Funds"
+              subtitle={`Showing ${filtered.length} of ${funds.length} funds`}
+              sheetName="Funds"
+              columns={FUND_EXPORT_COLUMNS}
+              rows={fundSort.sorted}
+              disabled={isLoading || !!error}
+            />
+          </div>
         </div>
       </div>
 

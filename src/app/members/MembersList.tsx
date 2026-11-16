@@ -14,9 +14,27 @@ import { TablePagination } from "@/components/ui/table-pagination";
 import { usePagination } from "@/hooks/usePagination";
 import { formatAmount, formatDate } from "@/lib/format";
 import { EmptyState } from "@/components/ui/empty-state";
+import { TableExportMenu } from "@/components/export/TableExportMenu";
+import type { ExportColumn } from "@/lib/export";
 
 const SELECT_CLASS =
   "h-10 rounded-md border border-input bg-background px-3 text-sm min-w-[10.5rem]";
+
+const MEMBER_EXPORT_COLUMNS: ExportColumn<AdminMemberSummary>[] = [
+  { header: "Name", value: (m) => m.full_name },
+  { header: "Phone", value: (m) => m.phone },
+  { header: "Email", value: (m) => m.email || "" },
+  { header: "Account", value: (m) => m.account_name || "Unnamed" },
+  {
+    header: "Also in",
+    value: (m) => (m.also_in_count > 0 ? `+${m.also_in_count} groups` : "—"),
+  },
+  { header: "Status", value: (m) => (m.is_active ? "Active" : "Inactive") },
+  { header: "Contribution count", value: (m) => m.contribution_count },
+  { header: "Contribution total (GHS)", value: (m) => formatAmount(m.contribution_total) },
+  { header: "Joined", value: (m) => formatDate(m.created_at) },
+];
+
 
 export default function MembersList() {
   const [search, setSearch] = useState("");
@@ -164,6 +182,17 @@ export default function MembersList() {
               Clear filters
             </Button>
           )}
+          <div className="ml-auto">
+            <TableExportMenu
+              filename="members"
+              title="Members"
+              subtitle={`Showing ${filtered.length} of ${members.length} memberships`}
+              sheetName="Members"
+              columns={MEMBER_EXPORT_COLUMNS}
+              rows={memberSort.sorted}
+              disabled={isLoading || !!error}
+            />
+          </div>
         </div>
       </div>
 

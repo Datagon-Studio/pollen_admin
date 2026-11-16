@@ -32,9 +32,23 @@ import {
   type DashboardTrendRange,
   type ReportDuration,
 } from "@/services/admin.api";
-import { formatCurrency } from "@/lib/format";
+import { formatAmount, formatCurrency, formatDate } from "@/lib/format";
 import { EmptyState } from "@/components/ui/empty-state";
+import { TableExportMenu } from "@/components/export/TableExportMenu";
+import type { ExportColumn } from "@/lib/export";
 import { cn } from "@/lib/utils";
+
+const REPORT_RECORD_EXPORT_COLUMNS: ExportColumn<AdminContributionRow>[] = [
+  { header: "Date", value: (c) => formatDate(c.date_received) },
+  { header: "Member", value: (c) => c.member_name || "Anonymous" },
+  { header: "Account", value: (c) => c.account_name || "Unnamed" },
+  { header: "Fund", value: (c) => c.fund_name || "Fund" },
+  { header: "Amount (GHS)", value: (c) => formatAmount(c.amount) },
+  { header: "Channel", value: (c) => (c.channel === "online" ? "Online" : "Manual") },
+  { header: "Status", value: (c) => c.status },
+  { header: "Reference", value: (c) => c.payment_reference || "" },
+];
+
 
 const PRESET_DURATION: Record<Extract<AppliedFilter, { kind: "preset" }>["preset"], ReportDuration> = {
   "30days": "30d",
@@ -163,6 +177,15 @@ export default function ReportsPage() {
           <p className="text-sm text-muted-foreground">{showingText(applied)}</p>
           <div className="flex items-center gap-2">
             {isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+            <TableExportMenu
+              filename="report-records"
+              title="Report records"
+              subtitle={showingText(applied)}
+              sheetName="Records"
+              columns={REPORT_RECORD_EXPORT_COLUMNS}
+              rows={filteredRecords}
+              disabled={isLoading || !!error || !data}
+            />
             <ReportPeriodPicker applied={applied} onApply={setApplied} />
           </div>
         </div>
