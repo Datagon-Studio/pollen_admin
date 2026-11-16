@@ -2,7 +2,7 @@
 
 Dedicated operations interface for Pollean staff (`superadmin`, `ops`, `support`). Separate from the group manager app at `app.pollean.com`.
 
-See [PRD-System-Admin-Portal.md](./PRD-System-Admin-Portal.md) for full requirements.
+See [PRD-System-Admin-Portal.md](./PRD-System-Admin-Portal.md) for full requirements. 
 
 ## Stack
 
