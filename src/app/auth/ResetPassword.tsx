@@ -93,6 +93,12 @@ export default function ResetPassword() {
 
   useEffect(() => {
     if (authLoading) return;
+    // token_hash links must be confirmed with Continue so an existing session
+    // (or email scanner) cannot skip / consume the one-time token incorrectly.
+    if (tokenHash) {
+      setAwaitingRecovery(false);
+      return;
+    }
     if (user) {
       setTokenReady(true);
       setAwaitingRecovery(false);
@@ -106,7 +112,7 @@ export default function ResetPassword() {
     ) {
       setAwaitingRecovery(false);
     }
-  }, [authLoading, user]);
+  }, [authLoading, user, tokenHash]);
 
   const handleContinueWithToken = async () => {
     if (!tokenHash) return;
@@ -181,7 +187,8 @@ export default function ResetPassword() {
     );
   }
 
-  const canSetPassword = Boolean(user) || tokenReady;
+  // With a token_hash, require explicit Continue (tokenReady) even if a session already exists.
+  const canSetPassword = tokenHash ? tokenReady : Boolean(user) || tokenReady;
   const hasToken = Boolean(tokenHash) && !canSetPassword;
   const title = isInvite ? "Set a password" : "Reset password";
   const description = canSetPassword
