@@ -160,6 +160,54 @@ export interface AdminContributionDetail extends AdminContributionRow {
   updated_at: string;
 }
 
+export type PaymentStatus =
+  | "pending"
+  | "successful"
+  | "failed"
+  | "abandoned"
+  | "needs_review";
+
+export interface AdminPaymentRow {
+  payment_id: string;
+  reference: string;
+  account_id: string;
+  account_name: string | null;
+  fund_id: string;
+  fund_name: string | null;
+  member_id: string | null;
+  contribution_id: string | null;
+  user_email: string;
+  contributor_name: string;
+  phone: string | null;
+  contribution_amount: number;
+  fee_amount: number;
+  charged_amount: number;
+  currency: string;
+  status: PaymentStatus;
+  paystack_status: string | null;
+  paid_at: string | null;
+  webhook_received_at: string | null;
+  last_verified_at: string | null;
+  verification_attempts: number;
+  last_error: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaymentSummaryCounts {
+  pending: number;
+  successful: number;
+  failed: number;
+  abandoned: number;
+  needs_review: number;
+  total: number;
+}
+
+export interface AdminPaymentsPage {
+  payments: AdminPaymentRow[];
+  summary: PaymentSummaryCounts;
+}
+
 export interface AccountStaffMember {
   user_id: string;
   email: string;
@@ -720,6 +768,49 @@ export const adminApi = {
     );
     if (!response.success || !response.data) {
       throw new Error(response.error || "Failed to load contribution");
+    }
+    return response.data;
+  },
+
+  async listPayments(params?: {
+    status?: PaymentStatus;
+    accountId?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    search?: string;
+  }): Promise<AdminPaymentsPage> {
+    const response = await request<AdminPaymentsPage>(
+      `/admin/payments${qs({
+        status: params?.status,
+        accountId: params?.accountId,
+        dateFrom: params?.dateFrom,
+        dateTo: params?.dateTo,
+        search: params?.search,
+      })}`,
+      { method: "GET" }
+    );
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Failed to load payments");
+    }
+    return response.data;
+  },
+
+  async getPayment(paymentId: string): Promise<AdminPaymentRow> {
+    const response = await request<AdminPaymentRow>(`/admin/payments/${paymentId}`, {
+      method: "GET",
+    });
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Failed to load payment");
+    }
+    return response.data;
+  },
+
+  async verifyPayment(paymentId: string): Promise<AdminPaymentRow> {
+    const response = await request<AdminPaymentRow>(`/admin/payments/${paymentId}/verify`, {
+      method: "POST",
+    });
+    if (!response.success || !response.data) {
+      throw new Error(response.error || "Failed to verify payment");
     }
     return response.data;
   },

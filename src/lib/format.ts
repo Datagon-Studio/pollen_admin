@@ -16,6 +16,13 @@ export function formatDate(dateStr: string): string {
   }).format(new Date(dateStr));
 }
 
+export function formatDateTime(dateStr: string): string {
+  return new Intl.DateTimeFormat("en-GH", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(dateStr));
+}
+
 export function formatMonthKey(key: string): string {
   const [year, month] = key.split("-");
   const d = new Date(Number(year), Number(month) - 1, 1);

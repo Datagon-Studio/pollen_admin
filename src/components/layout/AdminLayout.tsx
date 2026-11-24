@@ -17,6 +17,7 @@ import {
   Sun,
   ScrollText,
   UserRound,
+  CreditCard,
 } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "next-themes";
@@ -42,6 +43,7 @@ const navItems: NavItem[] = [
   { label: "Members", href: "/members", icon: Users },
   { label: "Funds", href: "/funds", icon: Wallet },
   { label: "Contributions", href: "/contributions", icon: HandCoins },
+  { label: "Payments", href: "/payments", icon: CreditCard },
   { label: "Reports", href: "/reports", icon: BarChart3 },
   { label: "Audit log", href: "/audit", icon: ScrollText },
   { label: "Settlements", href: "/settlements", icon: Landmark, complianceOnly: true },

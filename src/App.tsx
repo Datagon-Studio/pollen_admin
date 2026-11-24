@@ -16,6 +16,8 @@ import FundsList from "@/app/funds/FundsList";
 import FundDetail from "@/app/funds/FundDetail";
 import ContributionsList from "@/app/contributions/ContributionsList";
 import ContributionDetail from "@/app/contributions/ContributionDetail";
+import PaymentsList from "@/app/payments/PaymentsList";
+import PaymentDetail from "@/app/payments/PaymentDetail";
 import SettlementsList from "@/app/settlements/SettlementsList";
 import SettlementDetail from "@/app/settlements/SettlementDetail";
 import KycQueue from "@/app/kyc/KycQueue";
@@ -115,6 +117,22 @@ export default function App() {
             element={
               <StaffShell>
                 <ContributionDetail />
+              </StaffShell>
+            }
+          />
+          <Route
+            path="/payments"
+            element={
+              <StaffShell>
+                <PaymentsList />
+              </StaffShell>
+            }
+          />
+          <Route
+            path="/payments/:id"
+            element={
+              <StaffShell>
+                <PaymentDetail />
               </StaffShell>
             }
           />
